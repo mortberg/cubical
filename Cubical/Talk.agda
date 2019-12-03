@@ -563,7 +563,7 @@ open import Cubical.Data.DescendingList
 -- lists together with all of its properties. Chuangjie Xu, Fredrik
 -- Nordvall Forsberg and Neil Ghani recently used this in a paper
 -- called: "Three equivalent ordinal notation systems in cubical Agda"
---
+-- https://popl20.sigplan.org/details/CPP-2020-papers/25/Three-equivalent-ordinal-notation-systems-in-Cubical-Agda
 -- In the paper they define ordinal arithmetic operations using the
 -- representation for which it is easiest to work and then transport
 -- the operations and their properties to the other types. This is a
@@ -589,10 +589,11 @@ open import Cubical.HITs.SetQuotients
 
 
 -- In another very recent paper with Loïc Pujet called "Cubical
--- Synthetic Homotopy Theory" we formalized some classical results
--- from HoTT that were quite complicated to do in Book HoTT. We first
--- formalized the join HIT and proved directly that the join of two
--- circles is S³:
+-- Synthetic Homotopy Theory"
+-- https://popl20.sigplan.org/details/CPP-2020-papers/15/Cubical-Synthetic-Homotopy-Theory
+-- we formalized some classical results from HoTT that were quite
+-- complicated to do in Book HoTT. We first formalized the join HIT
+-- and proved directly that the join of two circles is S³:
 open import Cubical.HITs.Join
 
 -- We then defined the pushout HIT:
