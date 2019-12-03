@@ -20,7 +20,7 @@ Higher inductive types in Book HoTT
 
 An important new addition of Homotopy Type Theory (HoTT) is the notion
 of *higher inductive type* (~ 2011). These generalize the regular
-inductive types of type theory to also include non-trivials "higher"
+inductive types of type theory to also include non-trivial "higher"
 constructors specifying elements of the identity type.
 
 The semantics for these types in simplicial sets were worked out in
@@ -115,7 +115,7 @@ formulations of CTT as well.
 
 In CTT we have a primitive formal interval II with endpoints 0 : II
 and 1 : II. A point i : II should be thought of a point varying
-continously between 0 and 1. These interval variables behave like
+continuously between 0 and 1. These interval variables behave like
 normal variables in type theory and can hence occur in the context. A type
 
 i : II ⊢ A(i)
@@ -446,8 +446,8 @@ sucPathℤ  = isoToPath (iso sucℤ predℤ sucPredℤ predSucℤ)
 predPathℤ : ℤ ≡ ℤ
 predPathℤ = isoToPath (iso predℤ sucℤ predSucℤ sucPredℤ)
 
--- We now have non-trivial successor and precessor paths on ℤ. We can
--- use these to define addition and subtraction so that they are
+-- We now have non-trivial successor and predecessor paths on ℤ. We
+-- can use these to define addition and subtraction so that they are
 -- trivially equivalences.
 addEqℤ : ℕ → ℤ ≡ ℤ
 addEqℤ zero    = refl
