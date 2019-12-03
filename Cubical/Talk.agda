@@ -4,7 +4,7 @@
 -- Programming and proving with higher inductive types in Cubical Agda --
 -------------------------------------------------------------------------
 
-Talk Anders Mörtberg in the Stockholm Logic Seminar, December 4, 2019.
+Talk by Anders Mörtberg in the Stockholm Logic Seminar, December 4, 2019.
 
 Outline:
 
