@@ -83,10 +83,10 @@ congD P f p : Id (P y) (subst P p (f x)) (f y).
 Remarks:
 
 1. Elimination principle for higher constructors only hold up to Id.
-2. Complicated becaues of subst/cong/congD.
+2. Complicated because of subst/cong/congD.
 
-Despite these complicated features LOTS of very impressive things have
-been formalized using HITs in "Book HoTT". But because of these
+Despite these complications LOTS of very impressive things have been
+formalized using HITs in "Book HoTT". But because of these
 complications many people started looking for a type theory with
 *native* support for HITs where things compute better and things are
 simpler (no subst/cong/congD). Cubical type theory is such a type
