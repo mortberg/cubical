@@ -4,7 +4,7 @@
 -- Programming and proving with higher inductive types in Cubical Agda --
 -------------------------------------------------------------------------
 
-Talk by Anders Mörtberg in the Stockholm Logic Seminar, December 4, 2019.
+Talk by Anders Mörtberg in the Stockholm Logic Seminar, December 4+11, 2019.
 
 Outline:
 
@@ -336,6 +336,164 @@ winding p = transport (λ i → helix (p i)) (pos 0)
 test0 : Int
 test0 = winding (loop ∙ loop)
 
+
+data Torus : Set where
+  point : Torus
+  line1 : point ≡ point
+  line2 : point ≡ point
+  surf : PathP (λ i → line1 i ≡ line1 i) line2 line2
+
+
+data Torus2 : Set where
+  point' : Torus2
+  line1' : point' ≡ point'
+  line2' : point' ≡ point'
+  surf' : (line1' ∙ line2') ≡ (line2' ∙ line1')
+
+
+-- Torus ≡ S¹ × S¹
+
+t2c : Torus → S¹ × S¹
+t2c point = (base , base)
+t2c (line1 i) = (loop i , base)
+t2c (line2 i) = (base , loop i)
+t2c (surf i j) = (loop i , loop j)
+
+c2t : S¹ × S¹ → Torus
+c2t (base , base) = point
+c2t (loop i , base) = line1 i
+c2t (base , loop i) = line2 i
+c2t (loop i , loop j) = surf i j
+
+c2t-t2c : ∀ (t : Torus) → c2t (t2c t) ≡ t
+c2t-t2c point = refl
+c2t-t2c (line1 i) = refl
+c2t-t2c (line2 i) = refl
+c2t-t2c (surf i i₁) = refl
+
+t2c-c2t : ∀ (t : S¹ × S¹) → t2c (c2t t) ≡ t
+t2c-c2t (base , base) = refl
+t2c-c2t (base , loop i) = refl
+t2c-c2t (loop i , base) = refl
+t2c-c2t (loop i , loop j) = refl
+
+Torus-equals-two-circles : Path Type₀ Torus (S¹ × S¹)
+Torus-equals-two-circles = isoToPath (iso t2c c2t t2c-c2t c2t-t2c)
+
+windingTorus : point ≡ point → Int × Int
+windingTorus t = ( winding (λ i → fst (t2c (t i))) , winding (λ i → t2c (t i) .snd) )
+
+test1 : Int × Int
+test1 = windingTorus (line1 ∙ line2 ⁻¹)
+
+open import Cubical.HITs.KleinBottle
+open import Cubical.HITs.S2
+open import Cubical.HITs.S3
+
+
+
+
+data ℤ : Set where
+  pos : ℕ → ℤ
+  neg : ℕ → ℤ
+  posneg : pos 0 ≡ neg 0
+
+sucℤ : ℤ → ℤ
+sucℤ (pos x) = pos (suc x)
+sucℤ (neg zero) = pos 1
+sucℤ (neg (suc x)) = neg x
+sucℤ (posneg i) = pos 1
+
+predℤ : ℤ → ℤ
+predℤ (pos zero)    = neg 1
+predℤ (pos (suc n)) = pos n
+predℤ (neg n)       = neg (suc n)
+predℤ (posneg _)    = neg 1
+
+predSucℤ : ∀ n → predℤ (sucℤ n) ≡ n
+predSucℤ (pos x) = refl
+predSucℤ (neg zero) = posneg
+predSucℤ (neg (suc x)) = refl
+predSucℤ (posneg i) j = posneg (i ∧ j)
+
+sucPredℤ : ∀ n → sucℤ (predℤ n) ≡ n
+sucPredℤ (pos zero)    = sym posneg
+sucPredℤ (pos (suc _)) = refl
+sucPredℤ (neg _)       = refl
+sucPredℤ (posneg i) j  = posneg (i ∨ ~ j)
+
+sucPathℤ : ℤ ≡ ℤ
+sucPathℤ  = isoToPath (iso sucℤ predℤ sucPredℤ predSucℤ)
+
+predPathℤ : ℤ ≡ ℤ
+predPathℤ = isoToPath (iso predℤ sucℤ predSucℤ sucPredℤ)
+
+addPathℤ : ℕ → ℤ ≡ ℤ
+addPathℤ zero = refl
+addPathℤ (suc n) = addPathℤ n ∙ sucPathℤ
+
+subPathℤ : ℕ → ℤ ≡ ℤ
+subPathℤ zero = refl
+subPathℤ (suc n) = subPathℤ n ∙ predPathℤ
+
+addℤ : ℤ → ℤ → ℤ
+addℤ m (pos n) = transport (addPathℤ n) m
+addℤ m (neg n) = transport (subPathℤ n) m
+addℤ m (posneg i) = m
+
+test3 : ℤ
+test3 = addℤ (pos 3) (neg 7)
+
+isEquivAddℤ : ∀ (m : ℤ) → isEquiv (λ n → addℤ n m)
+isEquivAddℤ (pos x) = isEquivTransport (addPathℤ x)
+isEquivAddℤ (neg x) = isEquivTransport (subPathℤ x)
+isEquivAddℤ (posneg i) = isEquivTransport refl
+
+
+infixr 5 _∷_
+
+data FMSet (A : Set) : Set where
+  [] : FMSet A
+  _∷_ : (x : A) → (xs : FMSet A) → FMSet A
+  comm : ∀ (x y : A) (xs : FMSet A) → x ∷ y ∷ xs ≡ y ∷ x ∷ xs
+  trunc : isSet (FMSet A)
+
+_++_ : ∀ {A : Set} (xs ys : FMSet A) → FMSet A
+[] ++ ys = ys
+(x ∷ xs) ++ ys = x ∷ (xs ++ ys)
+comm x y xs i ++ ys = comm x y (xs ++ ys) i
+trunc xs zs p q i j ++ ys =
+  trunc (xs ++ ys) (zs ++ ys) (cong (_++ ys) p) (cong (_++ ys) q) i j
+
+open import Cubical.HITs.FiniteMultiset
+open import Cubical.Data.DescendingList
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{-
 -- We can define the Torus as:
 data Torus : Set where
   point : Torus
@@ -374,13 +532,17 @@ Torus≡S¹×S¹ = isoToPath (iso t2c c2t t2c-c2t c2t-t2c)
 
 -- More results about the circle can be found in the library.
 -- Including: ΩS¹≡Int : ΩS¹ ≡ Int
-open import Cubical.HITs.S1
+open import Cubical.HITs.S1 hiding (winding)
 
 -- We can combine this with the above equality between the Torus and
 -- two circles to compute winding numbers on the Torus:
-open import Cubical.HITs.Torus renaming (line1 to l1 ; line2 to l2)
+-- open import Cubical.HITs.Torus renaming (line1 to l1 ; line2 to l2)
 
-test1 : windingTorus (l1 ∙ l2) ≡ (pos 1 , pos 1)
+windingTorus : point ≡ point → Int × Int
+windingTorus l = ( winding (λ i → t2c (l i) .fst)
+                 , winding (λ i → t2c (l i) .snd))
+
+test1 : windingTorus (line1 ∙ line2) ≡ (pos 1 , pos 1)
 test1 = refl
 
 -- We have many more topological examples, including Klein bottle,
@@ -620,3 +782,4 @@ o Try examples where it was infeasible to prove results in Book HoTT,
   e.g. smash product:
 -}
 open import Cubical.HITs.SmashProduct
+-}

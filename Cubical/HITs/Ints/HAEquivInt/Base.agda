@@ -13,7 +13,7 @@ data HAEquivInt : Type₀ where
   pred : HAEquivInt -> HAEquivInt
   suc-pred : ∀ z -> suc (pred z) ≡ z
   pred-suc : ∀ z -> pred (suc z) ≡ z
-  coh : ∀ z → (λ i → suc (pred-suc z i)) ≡ suc-pred (suc z)
+  coh : ∀ z → cong suc (pred-suc z) ≡ suc-pred (suc z)
 
 
 suc-haequiv : HAEquiv HAEquivInt HAEquivInt
