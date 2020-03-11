@@ -241,7 +241,7 @@ agda/cubical to which many people have contributed:
 
 https://github.com/agda/cubical
 
-I will now show many examples from the library coming from computer
+I will now show some examples from the library coming from computer
 science, algebra, logic and homotopy theory.
 
 -}
@@ -274,7 +274,7 @@ refl' A x = λ _ → x
 
 -- We can write this nicer (in Cubical Agda we write x ≡ y for Path A x y):
 refl'' : {A : Set} (x : A) → x ≡ x
-refl'' x _ = x
+refl'' x i = x
 
 -- cong has a direct proof (not using J!)
 cong' : {A B : Set} (f : A → B) {x y : A} (p : x ≡ y) → f x ≡ f y
@@ -318,6 +318,11 @@ data S¹ : Set where
   base : S¹
   loop : base ≡ base
 
+
+
+
+
+
 -- We can write functions on S¹ using pattern-matching equations:
 double : S¹ → S¹
 double base = base
@@ -334,139 +339,7 @@ winding : ΩS¹ → Int
 winding p = transport (λ i → helix (p i)) (pos 0)
 
 test0 : Int
-test0 = winding (loop ∙ loop)
-
-
-data Torus : Set where
-  point : Torus
-  line1 : point ≡ point
-  line2 : point ≡ point
-  surf : PathP (λ i → line1 i ≡ line1 i) line2 line2
-
-
-data Torus2 : Set where
-  point' : Torus2
-  line1' : point' ≡ point'
-  line2' : point' ≡ point'
-  surf' : (line1' ∙ line2') ≡ (line2' ∙ line1')
-
-
--- Torus ≡ S¹ × S¹
-
-t2c : Torus → S¹ × S¹
-t2c point = (base , base)
-t2c (line1 i) = (loop i , base)
-t2c (line2 i) = (base , loop i)
-t2c (surf i j) = (loop i , loop j)
-
-c2t : S¹ × S¹ → Torus
-c2t (base , base) = point
-c2t (loop i , base) = line1 i
-c2t (base , loop i) = line2 i
-c2t (loop i , loop j) = surf i j
-
-c2t-t2c : ∀ (t : Torus) → c2t (t2c t) ≡ t
-c2t-t2c point = refl
-c2t-t2c (line1 i) = refl
-c2t-t2c (line2 i) = refl
-c2t-t2c (surf i i₁) = refl
-
-t2c-c2t : ∀ (t : S¹ × S¹) → t2c (c2t t) ≡ t
-t2c-c2t (base , base) = refl
-t2c-c2t (base , loop i) = refl
-t2c-c2t (loop i , base) = refl
-t2c-c2t (loop i , loop j) = refl
-
-Torus-equals-two-circles : Path Type₀ Torus (S¹ × S¹)
-Torus-equals-two-circles = isoToPath (iso t2c c2t t2c-c2t c2t-t2c)
-
-windingTorus : point ≡ point → Int × Int
-windingTorus t = ( winding (λ i → fst (t2c (t i))) , winding (λ i → t2c (t i) .snd) )
-
-test1 : Int × Int
-test1 = windingTorus (line1 ∙ line2 ⁻¹)
-
-open import Cubical.HITs.KleinBottle
-open import Cubical.HITs.S2
-open import Cubical.HITs.S3
-
-
-
-
-data ℤ : Set where
-  pos : ℕ → ℤ
-  neg : ℕ → ℤ
-  posneg : pos 0 ≡ neg 0
-
-sucℤ : ℤ → ℤ
-sucℤ (pos x) = pos (suc x)
-sucℤ (neg zero) = pos 1
-sucℤ (neg (suc x)) = neg x
-sucℤ (posneg i) = pos 1
-
-predℤ : ℤ → ℤ
-predℤ (pos zero)    = neg 1
-predℤ (pos (suc n)) = pos n
-predℤ (neg n)       = neg (suc n)
-predℤ (posneg _)    = neg 1
-
-predSucℤ : ∀ n → predℤ (sucℤ n) ≡ n
-predSucℤ (pos x) = refl
-predSucℤ (neg zero) = posneg
-predSucℤ (neg (suc x)) = refl
-predSucℤ (posneg i) j = posneg (i ∧ j)
-
-sucPredℤ : ∀ n → sucℤ (predℤ n) ≡ n
-sucPredℤ (pos zero)    = sym posneg
-sucPredℤ (pos (suc _)) = refl
-sucPredℤ (neg _)       = refl
-sucPredℤ (posneg i) j  = posneg (i ∨ ~ j)
-
-sucPathℤ : ℤ ≡ ℤ
-sucPathℤ  = isoToPath (iso sucℤ predℤ sucPredℤ predSucℤ)
-
-predPathℤ : ℤ ≡ ℤ
-predPathℤ = isoToPath (iso predℤ sucℤ predSucℤ sucPredℤ)
-
-addPathℤ : ℕ → ℤ ≡ ℤ
-addPathℤ zero = refl
-addPathℤ (suc n) = addPathℤ n ∙ sucPathℤ
-
-subPathℤ : ℕ → ℤ ≡ ℤ
-subPathℤ zero = refl
-subPathℤ (suc n) = subPathℤ n ∙ predPathℤ
-
-addℤ : ℤ → ℤ → ℤ
-addℤ m (pos n) = transport (addPathℤ n) m
-addℤ m (neg n) = transport (subPathℤ n) m
-addℤ m (posneg i) = m
-
-test3 : ℤ
-test3 = addℤ (pos 3) (neg 7)
-
-isEquivAddℤ : ∀ (m : ℤ) → isEquiv (λ n → addℤ n m)
-isEquivAddℤ (pos x) = isEquivTransport (addPathℤ x)
-isEquivAddℤ (neg x) = isEquivTransport (subPathℤ x)
-isEquivAddℤ (posneg i) = isEquivTransport refl
-
-
-infixr 5 _∷_
-
-data FMSet (A : Set) : Set where
-  [] : FMSet A
-  _∷_ : (x : A) → (xs : FMSet A) → FMSet A
-  comm : ∀ (x y : A) (xs : FMSet A) → x ∷ y ∷ xs ≡ y ∷ x ∷ xs
-  trunc : isSet (FMSet A)
-
-_++_ : ∀ {A : Set} (xs ys : FMSet A) → FMSet A
-[] ++ ys = ys
-(x ∷ xs) ++ ys = x ∷ (xs ++ ys)
-comm x y xs i ++ ys = comm x y (xs ++ ys) i
-trunc xs zs p q i j ++ ys =
-  trunc (xs ++ ys) (zs ++ ys) (cong (_++ ys) p) (cong (_++ ys) q) i j
-
-open import Cubical.HITs.FiniteMultiset
-open import Cubical.Data.DescendingList
+test0 = winding (λ i → double ((loop ∙ loop) i))
 
 
 
@@ -474,26 +347,6 @@ open import Cubical.Data.DescendingList
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-{-
 -- We can define the Torus as:
 data Torus : Set where
   point : Torus
@@ -530,6 +383,8 @@ t2c-c2t (loop _ , loop _) = refl
 Torus≡S¹×S¹ : Torus ≡ S¹ × S¹
 Torus≡S¹×S¹ = isoToPath (iso t2c c2t t2c-c2t c2t-t2c)
 
+
+
 -- More results about the circle can be found in the library.
 -- Including: ΩS¹≡Int : ΩS¹ ≡ Int
 open import Cubical.HITs.S1 hiding (winding)
@@ -542,7 +397,7 @@ windingTorus : point ≡ point → Int × Int
 windingTorus l = ( winding (λ i → t2c (l i) .fst)
                  , winding (λ i → t2c (l i) .snd))
 
-test1 : windingTorus (line1 ∙ line2) ≡ (pos 1 , pos 1)
+test1 : windingTorus (line1 ∙ line2 ⁻¹) ≡ (pos 1 , neg 1)
 test1 = refl
 
 -- We have many more topological examples, including Klein bottle,
@@ -552,10 +407,8 @@ open import Cubical.HITs.S2
 open import Cubical.HITs.S3
 open import Cubical.HITs.Susp
 
--- No Möbius strip yet! Room for improvement...
-
 -- These were all examples taken from topology. Let us now do some
--- more computer scientific examples!
+-- more computer scientific examples.
 
 
 
@@ -570,84 +423,6 @@ with this by saying that "inr n" is "- (n+1)", but it easily gets
 confusing and one can end up with off-by-one errors. A better solution
 would be to identify "inl 0" and "inr 0".
 -}
-data ℤ : Type₀ where
-  pos    : (n : ℕ) → ℤ
-  neg    : (n : ℕ) → ℤ
-  posneg : pos 0 ≡ neg 0
-
--- It is easy to prove that ℤ = ℕ + ℕ. Let's do some programming with
--- ℤ directly instead:
-sucℤ : ℤ → ℤ
-sucℤ (pos n)       = pos (suc n)
-sucℤ (neg zero)    = pos 1
-sucℤ (neg (suc n)) = neg n
-sucℤ (posneg _)    = pos 1
-
-predℤ : ℤ → ℤ
-predℤ (pos zero)    = neg 1
-predℤ (pos (suc n)) = pos n
-predℤ (neg n)       = neg (suc n)
-predℤ (posneg _)    = neg 1
-
-sucPredℤ : ∀ n → sucℤ (predℤ n) ≡ n
-sucPredℤ (pos zero)    = sym posneg
-sucPredℤ (pos (suc _)) = refl
-sucPredℤ (neg _)       = refl
-sucPredℤ (posneg i) j  = posneg (i ∨ ~ j)
-
-predSucℤ : ∀ n → predℤ (sucℤ n) ≡ n
-predSucℤ (pos _)       = refl
-predSucℤ (neg zero)    = posneg
-predSucℤ (neg (suc _)) = refl
-predSucℤ (posneg i) j  = posneg (i ∧ j)
-
-sucPathℤ : ℤ ≡ ℤ
-sucPathℤ  = isoToPath (iso sucℤ predℤ sucPredℤ predSucℤ)
-
-predPathℤ : ℤ ≡ ℤ
-predPathℤ = isoToPath (iso predℤ sucℤ predSucℤ sucPredℤ)
-
--- We now have non-trivial successor and predecessor paths on ℤ. We
--- can use these to define addition and subtraction so that they are
--- trivially equivalences.
-addEqℤ : ℕ → ℤ ≡ ℤ
-addEqℤ zero    = refl
-addEqℤ (suc n) = addEqℤ n ∙ sucPathℤ
-
-subEqℤ : ℕ → ℤ ≡ ℤ
-subEqℤ zero    = refl
-subEqℤ (suc n) = subEqℤ n ∙ predPathℤ
-
-addℤ : ℤ → ℤ → ℤ
-addℤ m (pos n)    = transport (addEqℤ n) m
-addℤ m (neg n)    = transport (subEqℤ n) m
-addℤ m (posneg _) = m
-
-test : ℤ
-test = addℤ (pos 3) (neg 8)
-
-isEquivAddℤ : (m : ℤ) → isEquiv (λ n → addℤ n m)
-isEquivAddℤ (pos n)    = isEquivTransport (addEqℤ n)
-isEquivAddℤ (neg n)    = isEquivTransport (subEqℤ n)
-isEquivAddℤ (posneg _) = isEquivTransport refl
-
--- We can define addition directly as well
-_+ℤ_ : ℤ → ℤ → ℤ
-m +ℤ (pos (suc n)) = sucℤ (m +ℤ pos n)
-m +ℤ (neg (suc n)) = predℤ (m +ℤ neg n)
-m +ℤ _             = m
-
--- And prove that it is equal to addℤ using binary funext
-addℤ≡+ℤ : addℤ ≡ _+ℤ_
-addℤ≡+ℤ i  m (pos (suc n)) = sucℤ (addℤ≡+ℤ i m (pos n))
-addℤ≡+ℤ i  m (neg (suc n)) = predℤ (addℤ≡+ℤ i m (neg n))
-addℤ≡+ℤ i  m (pos zero)    = m
-addℤ≡+ℤ i  m (neg zero)    = m
-addℤ≡+ℤ _  m (posneg _)    = m
-
--- We then directly get that +ℤ is an equivalence
-isEquiv+ℤ : (m : ℤ) → isEquiv (λ n → n +ℤ m)
-isEquiv+ℤ = subst (λ _+_ → (m : ℤ) → isEquiv (λ n → n + m)) addℤ≡+ℤ isEquivAddℤ
 
 -- This example can be found in:
 open import Cubical.HITs.Ints.QuoInt
@@ -666,8 +441,6 @@ open import Cubical.HITs.Ints.QuoInt
 
 open import Cubical.HITs.Ints.BiInvInt
 
--- Open problem: Is HAEquivInt equivalent to Int?
---
 -- data HAEquivInt : Type₀ where
 --   zero : HAEquivInt
 --   suc : HAEquivInt -> HAEquivInt
@@ -678,6 +451,7 @@ open import Cubical.HITs.Ints.BiInvInt
 --   pred-suc : ∀ z -> pred (suc z) ≡ z
 --   coh : ∀ z → (λ i → suc (pred-suc z i)) ≡ suc-pred (suc z)
 
+-- Open problem: Is HAEquivInt equivalent to Int?
 open import Cubical.HITs.Ints.HAEquivInt
 
 -- DeltaInt:
@@ -738,19 +512,18 @@ open import Cubical.HITs.PropositionalTruncation
 open import Cubical.HITs.SetTruncation
 open import Cubical.HITs.GroupoidTruncation
 open import Cubical.HITs.2GroupoidTruncation
+open import Cubical.HITs.Truncation.FromNegOne.Base -- hub and spoke
 
--- The general formulation using hub-and-spoke has been developed by
--- Zesen Qian, but not yet merged into master. If someone wants to
--- finish it talk to me.
+open import Cubical.HITs.Truncation.Base -- as nullification
 
 -- We can also easily define set quotients:
 open import Cubical.HITs.SetQuotients
 -- Proving that they are effective ((a b : A) → [ a ] ≡ [ b ] → R a b)
--- require univalence for propositions.
+-- requires univalence for propositions.
 
 
--- In another very recent paper with Loïc Pujet called "Cubical
--- Synthetic Homotopy Theory"
+-- In another recent paper with Loïc Pujet called "Cubical Synthetic
+-- Homotopy Theory"
 -- https://popl20.sigplan.org/details/CPP-2020-papers/15/Cubical-Synthetic-Homotopy-Theory
 -- we formalized some classical results from HoTT that were quite
 -- complicated to do in Book HoTT. We first formalized the join HIT
@@ -768,18 +541,23 @@ open import Cubical.HITs.Hopf
 -- and proved that its total space is S³ in about 300LOC.
 
 
-{-
+-- Work in progress:
 
-Future work:
+-- Do more examples from CS, logic and algebra. SIP should help a
+-- lot. Max has developed it cubically:
+open import Cubical.Foundations.SIP
+open import Cubical.Structures.Monoid
+open import Cubical.Structures.Queue
 
-o Do more examples from CS, logic and algebra. Structure identity
-  principle should help a lot (Max Zeuner is working on a cubical
-  version).
+-- Try more examples from HoTT, in particular cohomology. Alex
+-- Ljungström is working on it for his MSc thesis with Guillaume
+-- Brunerie and me:
+open import Cubical.ZCohomology.Base
+open import Cubical.ZCohomology.S1.S1
 
-o Try more examples from HoTT, in particular cohomology.
-
-o Try examples where it was infeasible to prove results in Book HoTT,
-  e.g. smash product:
--}
+-- Examples where it was infeasible to prove results in Book HoTT,
+-- e.g. smash product (no one is working on this as far as I know):
 open import Cubical.HITs.SmashProduct
--}
+
+-- Try to compute the Brunerie number. 
+open import Cubical.Experiments.Brunerie
