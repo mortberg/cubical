@@ -299,7 +299,7 @@ goo x = g10 (g9 (g8 (f7 (f6 (f5 x)))))
 
 
 
--- Marc's test:
+-- Marc's tests (with some rotations):
 
 fun : Ω² ∥ S²∙ ∥₂∙ .fst → Int
 fun x = g10 (g9 (g8 x))
@@ -307,5 +307,23 @@ fun x = g10 (g9 (g8 x))
 inv1 : Ω² ∥ S²∙ ∥₂∙ .fst
 inv1 i j = ∣ surf i j ∣₂
 
-test : fun inv1 ≡ neg 1
-test = refl
+inv1' : Ω² ∥ S²∙ ∥₂∙ .fst
+inv1' i j = ∣ surf (~ i) j ∣₂
+
+inv1'' : Ω² ∥ S²∙ ∥₂∙ .fst
+inv1'' i j = ∣ surf i (~ j) ∣₂
+
+inv1''' : Ω² ∥ S²∙ ∥₂∙ .fst
+inv1''' i j = ∣ surf (~ i) (~ j) ∣₂
+
+test1 : fun inv1 ≡ neg 1
+test1 = refl
+
+test1' : fun inv1' ≡ pos 1
+test1' = refl
+
+test1'' : fun inv1'' ≡ pos 1
+test1'' = refl
+
+test1''' : fun inv1''' ≡ neg 1
+test1''' = refl
