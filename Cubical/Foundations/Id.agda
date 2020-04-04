@@ -271,6 +271,19 @@ EquivContr A = helper1 f1 f2 f12 (EquivContrPath A)
   f12 (x , p) = λ i → x , equivToEquiv p i
 
 
+uaId : ∀ {A B : Type ℓ} → A ≃ B → A ≡ B
+uaId {A = A} {B = B} e = pathToId (ua (equivToEquivPath e))
+
+-- transport : {A B : Type ℓ} → A ≡ B → A → B
+-- transport p a = transp (λ i → p i) i0 a
+
+-- subst : (B : A → Type ℓ') (p : x ≡ y) → B x → B y
+-- subst B p pa = transport (λ i → B (p i)) pa
+
+uaβId : {A B : Type ℓ} (e : A ≃ B) (x : A) → transport (λ x → x) (uaId e) x ≡ e .pr₁ x
+uaβId e x = {!refl!}
+
+
 -- Propositional truncation
 
 ∥∥-isProp : ∀ (x y : ∥ A ∥) → x ≡ y
