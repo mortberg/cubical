@@ -3,6 +3,7 @@ module Cubical.HITs.Susp.Base where
 
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Equiv
+open import Cubical.Foundations.Univalence
 open import Cubical.Foundations.Isomorphism
 
 open import Cubical.Data.Bool
@@ -59,7 +60,7 @@ S¹≃SuspBool : S¹ ≃ SuspBool
 S¹≃SuspBool = isoToEquiv (iso S¹→SuspBool SuspBool→S¹ SuspBool→S¹→SuspBool S¹→SuspBool→S¹)
 
 S¹≡SuspBool : S¹ ≡ SuspBool
-S¹≡SuspBool = isoToPath (iso S¹→SuspBool SuspBool→S¹ SuspBool→S¹→SuspBool S¹→SuspBool→S¹)
+S¹≡SuspBool = ua S¹≃SuspBool
 
 -- Now the sphere
 
@@ -93,8 +94,11 @@ SuspS¹→S²→SuspS¹ south k = merid base k
 SuspS¹→S²→SuspS¹ (merid base j) k = merid base (k ∧ j)
 SuspS¹→S²→SuspS¹ (merid (loop j) i) k = meridian-contraction i j (~ k)
 
+S²≃SuspS¹ : S² ≃ SuspS¹
+S²≃SuspS¹ = isoToEquiv (iso S²→SuspS¹ SuspS¹→S² SuspS¹→S²→SuspS¹ S²→SuspS¹→S²)
+
 S²≡SuspS¹ : S² ≡ SuspS¹
-S²≡SuspS¹ = isoToPath (iso S²→SuspS¹ SuspS¹→S² SuspS¹→S²→SuspS¹ S²→SuspS¹→S²)
+S²≡SuspS¹ = ua S²≃SuspS¹
 
 -- And the 3-sphere
 
@@ -130,5 +134,8 @@ SuspS²→S³→SuspS² south l = merid base l
 SuspS²→S³→SuspS² (merid base j) l = merid base (l ∧ j)
 SuspS²→S³→SuspS² (merid (surf j k) i) l = meridian-contraction-2 i j k (~ l)
 
+S³≃SuspS² : S³ ≃ SuspS²
+S³≃SuspS² = isoToEquiv (iso S³→SuspS² SuspS²→S³ SuspS²→S³→SuspS² S³→SuspS²→S³)
+
 S³≡SuspS² : S³ ≡ SuspS²
-S³≡SuspS² = isoToPath (iso S³→SuspS² SuspS²→S³ SuspS²→S³→SuspS² S³→SuspS²→S³)
+S³≡SuspS² = ua S³≃SuspS²

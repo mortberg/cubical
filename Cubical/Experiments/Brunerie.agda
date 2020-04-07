@@ -9,6 +9,7 @@ open import Cubical.Data.HomotopyGroup
 open import Cubical.HITs.S1
 open import Cubical.HITs.S2
 open import Cubical.HITs.S3
+open import Cubical.HITs.Susp
 open import Cubical.HITs.Join
 open import Cubical.HITs.Hopf
 open import Cubical.HITs.SetTruncation as SetTrunc
@@ -327,3 +328,112 @@ test1'' = refl
 
 test1''' : fun inv1''' ≡ neg 1
 test1''' = refl
+
+
+
+-- Degrees of maps experiment
+
+-- The eᵢ maps from the paper. We only use the underlying functions,
+-- but it's easy to prove that they're all equivalences.
+
+e₀ : Susp S¹ ≃ Susp S¹
+e₀ = idEquiv _
+
+e₁ : Susp S¹ ≃ Susp S¹
+e₁ = isoToEquiv (iso f f Hf Hf)
+  where
+  f : Susp S¹ → Susp S¹
+  f north = north
+  f south = south
+  f (merid base i) = merid base i
+  f (merid (loop j) i) = merid (loop (~ j)) i
+
+  Hf : (x : Susp S¹) → f (f x) ≡ x
+  Hf north = refl
+  Hf south = refl
+  Hf (merid base i) = refl
+  Hf (merid (loop j) i) = refl
+
+e₂ : Susp S¹ ≃ Susp S¹
+e₂ = isoToEquiv (iso f f Hf Hf)
+  where
+  f : Susp S¹ → Susp S¹
+  f north = south
+  f south = north
+  f (merid x i) = merid x (~ i)
+
+  Hf : (x : Susp S¹) → f (f x) ≡ x
+  Hf north = refl
+  Hf south = refl
+  Hf (merid a i) = refl
+
+e₃ : Susp S¹ ≃ Susp S¹
+e₃ = isoToEquiv (iso f f Hf Hf)
+  where
+  f : Susp S¹ → Susp S¹
+  f north = south
+  f south = north
+  f (merid base i) = merid base (~ i)
+  f (merid (loop j) i) = merid (loop (~ j)) (~ i)
+
+  Hf : (x : Susp S¹) → f (f x) ≡ x
+  Hf north = refl
+  Hf south = refl
+  Hf (merid base i) = refl
+  Hf (merid (loop j) i) = refl
+
+-- Use univalence to turn these into paths (not used anywhere)
+p₀ : Susp S¹ ≡ Susp S¹
+p₀ = ua e₀
+
+p₁ : Susp S¹ ≡ Susp S¹
+p₁ = ua e₁
+
+p₂ : Susp S¹ ≡ Susp S¹
+p₂ = ua e₂
+
+p₃ : Susp S¹ ≡ Susp S¹
+p₃ = ua e₃
+
+
+-- The map h from Marc's email
+f1 : ∥ Ω² S²∙ .fst ∥₀ → Ω ∥ Ω S²∙ ∥₁∙ .fst
+f1 x = SetTrunc.elim (λ _ → squash₁ _ _) (λ p i → ∣ p i ∣₁) x
+
+-- The map one level up
+f2 : Ω ∥ Ω S²∙ ∥₁∙ .fst → Ω² ∥ S²∙ ∥₂∙ .fst
+f2 p i = GroupoidTrunc.elim (λ x → squash₂ _ _) (λ x j → ∣ x j ∣₂) (p i)
+
+-- Two versions of Susp S¹ as pointed types
+SuspS¹∙_south : Pointed₀
+SuspS¹∙_south = (Susp S¹) , south
+
+SuspS¹∙ : Pointed₀
+SuspS¹∙ = (Susp S¹) , north
+
+-- A small sanity check (and nice use of ua-gluePath)
+S²∙≡SuspS¹∙ : S²∙ ≡ SuspS¹∙
+S²∙≡SuspS¹∙ i = S²≡SuspS¹ i , ua-gluePath S²≃SuspS¹ {x = base} refl i
+
+-- Two versions of the function we want to use depending on whether we
+-- use north or south
+fun_north : Ω² SuspS¹∙ .fst → Int
+fun_north p = fun (f2 (f1 ∣ (λ i j → SuspS¹→S² (p i j)) ∣₀))
+
+fun_south : Ω² SuspS¹∙_south .fst → Int
+fun_south p = fun (f2 (f1 ∣ (λ i j → SuspS¹→S² (p i j)) ∣₀))
+
+
+-- Tests:
+
+test_e₀ : fun_north (λ i j → e₀ .fst (S²→SuspS¹ (surf i j))) ≡ neg 1
+test_e₀ = refl
+
+test_e₁ : fun_north (λ i j → e₁ .fst (S²→SuspS¹ (surf i j))) ≡ pos 1
+test_e₁ = refl
+
+test_e₂ : fun_south (λ i j → e₂ .fst (S²→SuspS¹ (surf i j))) ≡ pos 1
+test_e₂ = refl
+
+test_e₃ : fun_south (λ i j → e₃ .fst (S²→SuspS¹ (surf j i))) ≡ pos 1
+test_e₃ = refl

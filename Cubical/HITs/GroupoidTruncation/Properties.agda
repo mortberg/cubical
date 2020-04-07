@@ -29,3 +29,4 @@ elim bG f (squash₁ x y p q r s i j k) =
     (λ j k → elim bG f (r j k)) (λ j k → elim bG f (s j k))
     (squash₁ x y p q r s)
     i j k
+
