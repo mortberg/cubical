@@ -435,5 +435,5 @@ test_e₁ = refl
 test_e₂ : fun_south (λ i j → e₂ .fst (S²→SuspS¹ (surf i j))) ≡ pos 1
 test_e₂ = refl
 
-test_e₃ : fun_south (λ i j → e₃ .fst (S²→SuspS¹ (surf j i))) ≡ pos 1
+test_e₃ : fun_south (λ i j → e₃ .fst (S²→SuspS¹ (surf i j))) ≡ neg 1
 test_e₃ = refl
