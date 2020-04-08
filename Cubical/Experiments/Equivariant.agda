@@ -42,7 +42,7 @@ module Ternary where
   coe₃Cap : ∀ {ℓ} (A : I → I → I → Type ℓ) (r₀ r₁ r₂ : I) (a : A r₀ r₁ r₂)
          → coe₃ A r₀ r₁ r₂ a r₀ r₁ r₂ ≡ a
   coe₃Cap A r₀ r₁ r₂ a j =
-    transp (λ i → A (r₀ ∧ (i ∨ j)) (r₁ ∧ i ∨ j) (r₂ ∧ i ∨ j)) j
+    transp (λ i → A (r₀ ∧ (i ∨ j)) (r₁ ∧ (i ∨ j)) (r₂ ∧ (i ∨ j))) j
       (transp (λ i → A (r₀ ∧ (~ i ∨ j)) (r₁ ∧ (~ i ∨ j)) (r₂ ∧ (~ i ∨ j))) j a)
 
   -- We now have to check five equivariance equations:
@@ -70,5 +70,4 @@ module Ternary where
   -- (201)
   equivariance₅ : ∀ {ℓ} (A : I → I → I → Type ℓ) (r₀ r₁ r₂ : I) (a : A r₀ r₁ r₂) (s₀ s₁ s₂ : I)
                 → coe₃ A r₀ r₁ r₂ a s₀ s₁ s₂ ≡ coe₃ (λ i₀ i₁ i₂ → A i₂ i₀ i₁) r₁ r₂ r₀ a s₁ s₂ s₀
-                -- coe₃ (λ i₀ i₁ i₂ → A i₁ i₂ i₀) r₁ r₂ r₀ ? s₁ s₂ s₀
   equivariance₅ A r₀ r₁ r₂ a s₀ s₁ s₂ = refl
