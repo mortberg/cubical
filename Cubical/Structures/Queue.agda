@@ -39,32 +39,26 @@ module Queues-on (A : Type ℓ) (Aset : isSet A) where
  left-action-iso (X , l) (Y , m) e = ∀ a x → e .fst (l a x) ≡ m a (e .fst x)
 
  Left-Action-is-SNS : SNS {ℓ} left-action-structure left-action-iso
- Left-Action-is-SNS = SNS-≡→SNS-PathP left-action-iso ((λ _ _ → funExt₂Equiv))
+ Left-Action-is-SNS = SNS-≡→SNS-PathP left-action-iso (λ _ _ → funExt₂Equiv)
 
 
  -- Now for the pop-map as a structure
  -- First, a few preliminary results that we will need later
  pop-map-forward : {X Y : Type ℓ} → (X → Y)
                   →  Unit ⊎ (X × A) → Unit ⊎ (Y × A)
- pop-map-forward f (inl tt) = inl tt
+ pop-map-forward f (inl x)      = inl x
  pop-map-forward f (inr (x , a)) = inr (f x , a)
 
 
- pop-map-forward-∘ :{B C D : Type ℓ}
-  (g : C → D) (f : B → C)
-  → ∀ r → pop-map-forward {X = C} g (pop-map-forward f r) ≡ pop-map-forward (λ b → g (f b)) r
- pop-map-forward-∘ g f (inl tt) = refl
- pop-map-forward-∘ g f (inr (b , a)) = refl
+ pop-map-forward-∘ : {B C D : Type ℓ} (g : C → D) (f : B → C)
+                   → ∀ r → pop-map-forward g (pop-map-forward f r) ≡ pop-map-forward (g ∘ f) r
+ pop-map-forward-∘ g f (inl _) = refl
+ pop-map-forward-∘ g f (inr _) = refl
 
 
  pop-map-lemma : {X : Type ℓ} → idfun (Unit ⊎ (X × A)) ≡ pop-map-forward (idfun X)
- pop-map-lemma {X = X} = funExt γ
-  where
-   γ : ∀ z → z ≡ pop-map-forward (idfun X) z
-   γ (inl tt) = refl
-   γ (inr xa) = refl
-
-
+ pop-map-lemma _ (inl x) = inl x
+ pop-map-lemma _ (inr x) = inr x
 
  pop-structure : Type ℓ → Type ℓ
  pop-structure X = X → Unit ⊎ (X × A)
@@ -109,7 +103,6 @@ module Queues-on (A : Type ℓ) (Aset : isSet A) where
  -- Should we add further axioms for Queues?
  -- Some suggestions:
  queue-axioms : (Q : Type ℓ) → queue-structure Q → Type ℓ
- queue-axioms Q (emp , push , pop) =   (isSet Q)
+ queue-axioms Q (emp , push , pop) =   isSet Q
                                      × (pop emp ≡ inl tt)
                                      × ∀ a q → pop (push a q) ≡ inr (q , a)
-                                     -- etc.
