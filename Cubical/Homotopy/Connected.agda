@@ -24,10 +24,39 @@ open import Cubical.HITs.S1
 open import Cubical.Data.Bool
 open import Cubical.Data.Unit
 
+private
+  variable
+    ℓ : Level
+
 -- Note that relative to most sources, this notation is off by +2
 isConnected : ∀ {ℓ} (n : HLevel) (A : Type ℓ) → Type ℓ
-isConnected n A = isContr (hLevelTrunc n A)
+isConnected n A = hLevelTrunc n A × isProp (hLevelTrunc n A)
 
+isConnectedPath : (n : HLevel) {A : Type ℓ}
+                → isConnected (suc n) A
+                → (x y : A) → isConnected n (x ≡ y)
+fst (isConnectedPath n connA x y) = PathIdTruncIso n .Iso.fun (connA .snd _ _)
+snd (isConnectedPath n connA x y) =
+  subst isProp (PathIdTrunc n) (isProp→isSet (connA .snd) _ _)
+
+
+
+-- {!connA .snd ∣ x ∣ ∣ y ∣!} , {!PathIdTruncIso n .Iso.fun!} -- elim2 {!!} λ p q → {!n!}
+-- {!PathIdTruncIso n .Iso.fun!}
+-- isConnectedPath (suc n) {A = A} connA a₀ a₁ =
+--   isContrRetract
+--     (Trunc.rec {B = Path (hLevelTrunc (2 + n) A) ∣ a₀ ∣ ∣ a₁ ∣} (isOfHLevelTrunc (2 + n) _ _) (cong ∣_∣))
+--     (λ p → transport (λ i → Trunc.rec (isOfHLevelTypeOfHLevel (suc n))
+--                                         (λ a → (hLevelTrunc (suc n) (a ≡ a₁))
+--                                                , isOfHLevelTrunc (suc n)) (p (~ i)) .fst)
+--             ∣ refl ∣)
+--     (Trunc.elim (λ _ → isOfHLevelPath (suc n) (isOfHLevelTrunc (suc n)) _ _)
+--                 (J (λ a₁ p → transport (λ i → HubAndSpoke (p (~ i) ≡ a₁) n) ∣ (λ _ → a₁) ∣ ≡ ∣ p ∣)
+--                    (transportRefl ∣ refl ∣)))
+--     (isContr→isContrPath connA _ _)
+
+
+{-
 isConnectedFun : ∀ {ℓ ℓ'} (n : HLevel) {A : Type ℓ} {B : Type ℓ'} (f : A → B) → Type (ℓ-max ℓ ℓ')
 isConnectedFun n f = ∀ b → isConnected n (fiber f b)
 
@@ -313,3 +342,4 @@ inrConnected {A = A} {B = B} {C = C} n f g iscon =
                     (~ i)
                     (equiv-proof (elim.isEquivPrecompose f n Q iscon)
                                  fun .fst .snd i a))
+-}
