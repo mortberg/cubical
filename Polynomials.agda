@@ -219,11 +219,23 @@ module PolyMod (R' : CommRing ℓ) where
   Poly→Poly' p = (Poly→Fun p) , (Poly→Prf p)
 
   Poly'→Poly+ : (q : Poly') → Σ[ p ∈ Poly ] Poly→Fun p ≡ q .fst
-  Poly'→Poly+ (f , pf) = Trunc.rec lem {!!} pf
+  Poly'→Poly+ (f , pf) = Trunc.rec lem (λ x → {!!}) pf -- toPoly (fst x) , rem (x .fst) (x .snd)) pf
     where
     lem : isProp (Σ[ p ∈ Poly ] Poly→Fun p ≡ f)
     lem (p , α) (p' , α') =
       ΣPathP (polyEq p p' (α ∙ sym α'), isProp→PathP (λ i → (isSetΠ λ _ → is-set) _ _) _ _)
+
+    foo : (n : ℕ) → (h : (m : ℕ) → n ≤ m → f m ≡ 0r) → Σ[ p ∈ Poly ] Poly→Fun p ≡ f
+    foo zero h = [] , (funExt (λ n → sym (h n zero-≤)))
+    foo (suc n) h = (f n ∷ foo n (λ m h2 → h m {!!}) .fst) , {!!}
+
+    -- toPoly : ℕ → Poly
+    -- toPoly zero = f zero ∷ []
+    -- toPoly (suc n) = f (suc n) ∷ toPoly n
+
+    -- rem : (n : ℕ) (h : (m : ℕ) → n ≤ m → f m ≡ 0r) → Poly→Fun (toPoly n) ≡ f
+    -- rem zero h = funExt (λ { 0 → refl ; (suc m) →  sym (h (suc m) zero-≤) })
+    -- rem (suc n) h = funExt (λ { 0 → {!h (suc n)!} ; (suc m) → {!!} })
 
   -- TODO: define the unique polynomial with minimal degree
   Poly'→Poly : Poly' → Poly
