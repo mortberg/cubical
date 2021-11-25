@@ -20,7 +20,7 @@ open import Cubical.Algebra.CommRing
 
 open import Cubical.Data.Empty renaming (rec to ⊥-rec)
 open import Cubical.Data.Sigma
-open import Cubical.HITs.PropositionalTruncation renaming (map to ∥∥-map)
+open import Cubical.HITs.PropositionalTruncation as Trunc renaming (map to ∥∥-map)
 open import Cubical.Data.Nat.Order
 
 open import Cubical.Functions.Logic
@@ -167,6 +167,62 @@ module PolyMod (R' : CommRing ℓ) where
   -- Poly→Prf' (a ∷ p) = (suc (Poly→Prf' p .fst) , (λ { zero h → ⊥-rec (¬-<-zero h) ; (suc m) h → Poly→Prf' p .snd m (predℕ-≤-predℕ h) }))
   -- Poly→Prf' (drop0 i) = {!!}
 
+  at0 : (ℕ → R) → R
+  at0 f = f 0
+
+  atS : (ℕ → R) → (ℕ → R)
+  atS f n = f (suc n)
+
+  polyEq : (p p' : Poly) → Poly→Fun p ≡ Poly→Fun p' → p ≡ p'
+  polyEq [] [] _ = refl
+  polyEq [] (a ∷ p') α =
+    sym drop0 ∙∙ cong₂ _∷_ (cong at0 α) (polyEq [] p' (cong atS α)) ∙∙ refl
+  polyEq [] (drop0 j) α k =
+    hcomp
+      (λ l → λ
+        { (j = i1) → drop0 l
+        ; (k = i0) → drop0 l
+        ; (k = i1) → drop0 (j ∧ l)
+        })
+      (is-set 0r 0r (cong at0 α) refl j k ∷ [])
+  polyEq (a ∷ p) [] α =
+    refl ∙∙ cong₂ _∷_ (cong at0 α) (polyEq p [] (cong atS α)) ∙∙ drop0
+  polyEq (a ∷ p) (a₁ ∷ p') α =
+    cong₂ _∷_ (cong at0 α) (polyEq p p' (cong atS α))
+  polyEq (a ∷ p) (drop0 j) α k =
+    hcomp -- filler
+      (λ l → λ
+        { (k = i0) → a ∷ p
+        ; (k = i1) → drop0 (j ∧ l)
+        ; (j = i0) → at0 (α k) ∷ polyEq p [] (cong atS α) k
+        })
+      (at0 (α k) ∷ polyEq p [] (cong atS α) k)
+  polyEq (drop0 i) [] α k =
+    hcomp
+      (λ l → λ
+        { (i = i1) → drop0 l
+        ; (k = i0) → drop0 (i ∧ l)
+        ; (k = i1) → drop0 l
+        })
+      (is-set 0r 0r (cong at0 α) refl i k ∷ [])
+  polyEq (drop0 i) (a ∷ p') α k =
+    hcomp -- filler
+      (λ l → λ
+        { (k = i0) → drop0 (i ∧ l)
+        ; (k = i1) → a ∷ p'
+        ; (i = i0) → at0 (α k) ∷ polyEq [] p' (cong atS α) k
+        })
+      (at0 (α k) ∷ polyEq [] p' (cong atS α) k)
+  polyEq (drop0 i) (drop0 j) α k =
+    hcomp
+      (λ l → λ
+        { (k = i0) → drop0 (i ∧ l)
+        ; (k = i1) → drop0 (j ∧ l)
+        ; (i = i0) (j = i0) → at0 (α k) ∷ []
+        ; (i = i1) (j = i1) → drop0 l
+        })
+      (is-set 0r 0r (cong at0 α) refl (i ∧ j) k ∷ [])
+
   Poly→Prf : (p : Poly) → ∃[ n ∈ ℕ ] ((m : ℕ) → n ≤ m → Poly→Fun p m ≡ 0r)
   Poly→Prf = ElimProp.f (λ (p : Poly) → ∃[ n ∈ ℕ ] ((m : ℕ) → n ≤ m → Poly→Fun p m ≡ 0r))
                         ∣ 0 , (λ _ _ → refl) ∣
@@ -174,27 +230,41 @@ module PolyMod (R' : CommRing ℓ) where
                                                                    ; (suc m) → λ h → q m (predℕ-≤-predℕ h) }}) b)
                         squash
 
+
+
   --  --Poly' = Σ[ p ∈ (ℕ → R) ] (∃[ n ∈ ℕ ] ((m : ℕ) → n ≤ m → p m ≡ 0r))
   Poly→Poly' : Poly → Poly'
   Poly→Poly' p = (Poly→Fun p) , (Poly→Prf p)
 
+  Poly'→Poly+ : (q : Poly') → Σ[ p ∈ Poly ] Poly→Fun p ≡ q .fst
+  Poly'→Poly+ (f , pf) = Trunc.rec lem (λ x → {!!}) pf -- toPoly (fst x) , rem (x .fst) (x .snd)) pf
+    where
+    lem : isProp (Σ[ p ∈ Poly ] Poly→Fun p ≡ f)
+    lem (p , α) (p' , α') =
+      ΣPathP (polyEq p p' (α ∙ sym α'), isProp→PathP (λ i → (isSetΠ λ _ → is-set) _ _) _ _)
+
+    foo : (n : ℕ) → (h : (m : ℕ) → n ≤ m → f m ≡ 0r) → Σ[ p ∈ Poly ] Poly→Fun p ≡ f
+    foo zero h = [] , (funExt (λ n → sym (h n zero-≤)))
+    foo (suc n) h = (f n ∷ foo n (λ m h2 → h m {!!}) .fst) , {!!}
+
+    -- toPoly : ℕ → Poly
+    -- toPoly zero = f zero ∷ []
+    -- toPoly (suc n) = f (suc n) ∷ toPoly n
+
+    -- rem : (n : ℕ) (h : (m : ℕ) → n ≤ m → f m ≡ 0r) → Poly→Fun (toPoly n) ≡ f
+    -- rem zero h = funExt (λ { 0 → refl ; (suc m) →  sym (h (suc m) zero-≤) })
+    -- rem (suc n) h = funExt (λ { 0 → {!h (suc n)!} ; (suc m) → {!!} })
+
   -- TODO: define the unique polynomial with minimal degree
   Poly'→Poly : Poly' → Poly
-  Poly'→Poly (p , ∣ 0 , h ∣) = []
-  Poly'→Poly (p , ∣ suc n , h ∣) = p 0 ∷ Poly'→Poly (p ∘ suc , ∣ n , (λ m p → h (suc m) (suc-≤-suc p)) ∣)
-  Poly'→Poly (p , squash q r i) = {!!}
+  Poly'→Poly q = Poly'→Poly+ q .fst
 
   lemmaisSet : (p : Poly) → Poly'→Poly (Poly→Poly' p) ≡ p
-  lemmaisSet [] = {!!}
-  lemmaisSet (a ∷ p) = {!!}
-  lemmaisSet (drop0 i) = {!!}
+  lemmaisSet p = polyEq _ _ (Poly'→Poly+ (Poly→Poly' p) .snd)
 
 
   isSetPoly : isSet Poly
-  isSetPoly = isSetRetract Poly→Poly'
-                           Poly'→Poly
-                           (λ p → lemmaisSet p)
-                           isSetPoly'
+  isSetPoly = isSetRetract Poly→Poly' Poly'→Poly lemmaisSet isSetPoly'
 
 
 
