@@ -130,11 +130,24 @@ module PolyMod (R' : CommRing ℓ) where
   Poly' : Type ℓ
   Poly' = Σ[ p ∈ (ℕ → R) ] (∃[ n ∈ ℕ ] ((m : ℕ) → n ≤ m → p m ≡ 0r))
 
+  Poly'' : Type ℓ
+  Poly'' = Σ[ p ∈ (ℕ → R) ] Σ[ n ∈ ℕ ] ((m : ℕ) → n ≤ m → p m ≡ 0r)
+
 --Kolla in Cubical.Foundations.HLevels, finns lemman för sigma-typer
 
 
   isSetPoly' : isSet Poly'
   isSetPoly' = isSetΣSndProp (isSetΠ (λ _ → is-set)) λ _ → squash
+
+  isSetPoly'' : isSet Poly''
+  isSetPoly'' = isSetΣ (isSetΠ (λ _ → is-set)) (λ x → isSetΣSndProp isSetℕ λ n → isPropΠ2 (λ m h → is-set _ _))
+
+  Poly''→Poly : Poly'' → Poly
+  Poly''→Poly (p , n , h) = help p n h
+    where
+    help : (p : ℕ → R) (n : ℕ) → ((m : ℕ) → n ≤ m → p m ≡ 0r) → Poly
+    help p zero h = []
+    help p (suc n) h = p 0 ∷ help (λ x → p (suc x)) n (λ m x → h (suc m) (suc-≤-suc x))
 
   isZero : ℕ → Bool
   isZero zero = true
@@ -148,6 +161,11 @@ module PolyMod (R' : CommRing ℓ) where
     foo : (λ n → if isZero n then 0r else 0r) ≡ (λ _ → 0r)
     foo i zero = 0r
     foo i (suc n) = 0r
+
+  -- Poly→Prf' : (p : Poly) → Σ[ n ∈ ℕ ] ((m : ℕ) → n ≤ m → Poly→Fun p m ≡ 0r)
+  -- Poly→Prf' [] = 0 , (λ _ _ → refl)
+  -- Poly→Prf' (a ∷ p) = (suc (Poly→Prf' p .fst) , (λ { zero h → ⊥-rec (¬-<-zero h) ; (suc m) h → Poly→Prf' p .snd m (predℕ-≤-predℕ h) }))
+  -- Poly→Prf' (drop0 i) = {!!}
 
   Poly→Prf : (p : Poly) → ∃[ n ∈ ℕ ] ((m : ℕ) → n ≤ m → Poly→Fun p m ≡ 0r)
   Poly→Prf = ElimProp.f (λ (p : Poly) → ∃[ n ∈ ℕ ] ((m : ℕ) → n ≤ m → Poly→Fun p m ≡ 0r))
