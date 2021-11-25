@@ -1,4 +1,4 @@
-{-A
+{-
 Polynomials for Cubical Agda
 ============================
 -}
@@ -142,13 +142,6 @@ module PolyMod (R' : CommRing ℓ) where
   isSetPoly'' : isSet Poly''
   isSetPoly'' = isSetΣ (isSetΠ (λ _ → is-set)) (λ x → isSetΣSndProp isSetℕ λ n → isPropΠ2 (λ m h → is-set _ _))
 
-  Poly''→Poly : Poly'' → Poly
-  Poly''→Poly (p , n , h) = help p n h
-    where
-    help : (p : ℕ → R) (n : ℕ) → ((m : ℕ) → n ≤ m → p m ≡ 0r) → Poly
-    help p zero h = []
-    help p (suc n) h = p 0 ∷ help (λ x → p (suc x)) n (λ m x → h (suc m) (suc-≤-suc x))
-
   isZero : ℕ → Bool
   isZero zero = true
   isZero (suc n) = false
@@ -237,31 +230,26 @@ module PolyMod (R' : CommRing ℓ) where
   Poly→Poly' p = (Poly→Fun p) , (Poly→Prf p)
 
   Poly'→Poly+ : (q : Poly') → Σ[ p ∈ Poly ] Poly→Fun p ≡ q .fst
-  Poly'→Poly+ (f , pf) = Trunc.rec lem (λ x → {!!}) pf -- toPoly (fst x) , rem (x .fst) (x .snd)) pf
+  Poly'→Poly+ (f , pf) = Trunc.rec lem (λ x → help f (x .fst) (x .snd) , funExt (bar f (fst x) (snd x))) pf
     where
     lem : isProp (Σ[ p ∈ Poly ] Poly→Fun p ≡ f)
     lem (p , α) (p' , α') =
       ΣPathP (polyEq p p' (α ∙ sym α'), isProp→PathP (λ i → (isSetΠ λ _ → is-set) _ _) _ _)
 
-    foo : (n : ℕ) → (h : (m : ℕ) → n ≤ m → f m ≡ 0r) → Σ[ p ∈ Poly ] Poly→Fun p ≡ f
-    foo zero h = [] , (funExt (λ n → sym (h n zero-≤)))
-    foo (suc n) h = (f n ∷ foo n (λ m h2 → h m {!!}) .fst) , {!!}
+    help : (p : ℕ → R) (n : ℕ) → ((m : ℕ) → n ≤ m → p m ≡ 0r) → Poly
+    help p zero h = []
+    help p (suc n) h = p 0 ∷ help (λ x → p (suc x)) n (λ m x → h (suc m) (suc-≤-suc x))
 
-    -- toPoly : ℕ → Poly
-    -- toPoly zero = f zero ∷ []
-    -- toPoly (suc n) = f (suc n) ∷ toPoly n
+    bar : (f : ℕ → R) (n : ℕ) → (h : (m : ℕ) → n ≤ m → f m ≡ 0r) (m : ℕ) → Poly→Fun (help f n h) m ≡ f m
+    bar f zero h m = sym (h m zero-≤)
+    bar f (suc n) h zero = refl
+    bar f (suc n) h (suc m) = bar (λ x → f (suc x)) n (λ k p → h (suc k) (suc-≤-suc p)) m
 
-    -- rem : (n : ℕ) (h : (m : ℕ) → n ≤ m → f m ≡ 0r) → Poly→Fun (toPoly n) ≡ f
-    -- rem zero h = funExt (λ { 0 → refl ; (suc m) →  sym (h (suc m) zero-≤) })
-    -- rem (suc n) h = funExt (λ { 0 → {!h (suc n)!} ; (suc m) → {!!} })
-
-  -- TODO: define the unique polynomial with minimal degree
   Poly'→Poly : Poly' → Poly
   Poly'→Poly q = Poly'→Poly+ q .fst
 
   lemmaisSet : (p : Poly) → Poly'→Poly (Poly→Poly' p) ≡ p
   lemmaisSet p = polyEq _ _ (Poly'→Poly+ (Poly→Poly' p) .snd)
-
 
   isSetPoly : isSet Poly
   isSetPoly = isSetRetract Poly→Poly' Poly'→Poly lemmaisSet isSetPoly'
