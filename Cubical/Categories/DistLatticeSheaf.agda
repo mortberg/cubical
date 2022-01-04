@@ -3,9 +3,11 @@ module Cubical.Categories.DistLatticeSheaf where
 
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Structure
+open import Cubical.Foundations.HLevels
 open import Cubical.Foundations.Powerset
 open import Cubical.Data.Sigma
 
+open import Cubical.Relation.Binary.Base
 open import Cubical.Relation.Binary.Poset
 
 open import Cubical.Algebra.Ring
@@ -20,12 +22,14 @@ open import Cubical.Categories.Functor
 open import Cubical.Categories.NaturalTransformation
 open import Cubical.Categories.Limits.Pullback
 open import Cubical.Categories.Limits.Terminal
+open import Cubical.Categories.Limits.Limits
 open import Cubical.Categories.Instances.Functors
 open import Cubical.Categories.Instances.CommRings
 open import Cubical.Categories.Instances.Poset
 open import Cubical.Categories.Instances.Semilattice
 open import Cubical.Categories.Instances.Lattice
 open import Cubical.Categories.Instances.DistLattice
+
 
 private
   variable
@@ -98,6 +102,40 @@ module _ (L : DistLattice ℓ) (C : Category ℓ' ℓ'') (T : Terminal C) where
   -- TODO: might be better to define this as a record
   DLSheaf : Type (ℓ-max (ℓ-max ℓ ℓ') ℓ'')
   DLSheaf = Σ[ F ∈ DLPreSheaf ] isDLSheaf F
+
+
+module Limits  (L : DistLattice ℓ) (C : Category ℓ' ℓ'') (L' : ℙ (fst L)) where
+
+  open MeetSemilattice (Lattice→MeetSemilattice (DistLattice→Lattice L)) renaming (_≤_ to _≤l_)
+  open PosetStr
+  open IsPoset
+  open BinaryRelation
+
+  ↓∩ : (x : fst L) → x ∈ L' → ℙ (fst L)
+  ↓∩ x hx y = ((y ∈ L') × (y ≤l x)) , isProp× (∈-isProp L' y) (DistLatticeStr.is-set (snd L) _ _)
+
+  bar : (x : fst L) → x ∈ L' → Poset ℓ ℓ
+  fst (bar x hx) = Σ[ y ∈ fst L ] (↓∩ x hx y .fst)
+  _≤_ (snd (bar x hx)) (y1 , hy1) (y2 , hy2) = y1 ≤l y2
+  is-set (isPoset (snd (bar x hx))) = {!!}
+  is-prop-valued (isPoset (snd (bar x hx))) = {!!}
+  is-refl (isPoset (snd (bar x hx))) a = {!!}
+  is-trans (isPoset (snd (bar x hx))) a b c h1 h2 = {!!}
+  is-antisym (isPoset (snd (bar x hx))) a b h1 h2 = {!!}
+
+  foo : (x : fst L) → x ∈ L' → Category ℓ ℓ
+  foo x hx = PosetCategory (bar x hx)
+
+  open Pullback
+  open LimCone
+  open Cospan
+
+  blop : (H : (x : fst L) (hx : x ∈ L') → LimitsOfShape (foo x hx) C) → Pullbacks C
+  pbOb (blop H cspn) = ?
+  pbPr₁ (blop H cspn) = {!!}
+  pbPr₂ (blop H cspn) = {!!}
+  pbCommutes (blop H cspn) = {!!}
+  univProp (blop H cspn) = {!!}
 
 
 module Lemma1 (L : DistLattice ℓ) (C : Category ℓ' ℓ'') (T : Terminal C) (L' : ℙ (fst L)) (hB : IsBasis L L') where
