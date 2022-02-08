@@ -3,9 +3,11 @@ module Cubical.Categories.DistLatticeSheaf where
 
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Structure
+open import Cubical.Foundations.HLevels
 open import Cubical.Foundations.Powerset
 open import Cubical.Data.Sigma
 
+open import Cubical.Relation.Binary.Base
 open import Cubical.Relation.Binary.Poset
 
 open import Cubical.Algebra.Ring
@@ -20,6 +22,7 @@ open import Cubical.Categories.Functor
 open import Cubical.Categories.NaturalTransformation
 open import Cubical.Categories.Limits.Pullback
 open import Cubical.Categories.Limits.Terminal
+open import Cubical.Categories.Limits.Limits
 open import Cubical.Categories.Instances.Functors
 open import Cubical.Categories.Instances.CommRings
 open import Cubical.Categories.Instances.Poset
@@ -122,6 +125,61 @@ module SheafOnBasis (L : DistLattice ℓ) (C : Category ℓ' ℓ'') (T : Termina
   instance
    _ = snd L
    _ = snd (Basis→MeetSemilattice L L' hB)
+
+
+ module Limits  (L : DistLattice ℓ) (C : Category ℓ' ℓ'') (L' : ℙ (fst L)) where
+
+  open DistLatticeStr (snd L)
+  open JoinSemilattice (Lattice→JoinSemilattice (DistLattice→Lattice L))
+  open MeetSemilattice (Lattice→MeetSemilattice (DistLattice→Lattice L))
+      using (∧≤RCancel ; ∧≤LCancel)
+      renaming (_≤_ to _≤l_)
+  open PosetStr (IndPoset .snd) hiding (_≤_)
+
+  -- open MeetSemilattice (Lattice→MeetSemilattice (DistLattice→Lattice L)) renaming (_≤_ to _≤l_)
+  -- open PosetStr (IndPoset .snd)
+  -- open PosetStr
+  -- open IsPoset
+  -- open BinaryRelation
+  -- open DistLatticeStr
+
+  ↓∩ : (x : fst L) → ℙ (fst L)
+  ↓∩ x y = ((y ∈ L') × (y ≤l x)) , isProp× (∈-isProp L' y) (is-set _ _)
+
+  -- JP : (x : fst L) → Poset ℓ ℓ
+  -- fst (JP x) = Σ[ a ∈ fst L ] (↓∩ x a .fst)
+  -- PosetStr._≤_ (snd (JP x)) (a , _) (b , _) = a ≤l b
+  -- PosetStr.is-set (isPoset (snd (JP x))) = isSetΣSndProp (is-set (snd L)) λ x → isPropΣ {!!} {!!}
+  -- is-prop-valued (isPoset (snd (JP x))) = λ a b → {!!}
+  -- is-refl (isPoset (snd (JP x))) = λ a → {!!}
+  -- is-trans (isPoset (snd (JP x))) = {!!}
+  -- is-antisym (isPoset (snd (JP x))) = {!!}
+
+  -- ↓∩ : (x : fst L) → x ∈ L' → ℙ (fst L)
+  -- ↓∩ x hx y = ((y ∈ L') × (y ≤l x)) , isProp× (∈-isProp L' y) (DistLatticeStr.is-set (snd L) _ _)
+
+  -- bar : (x : fst L) → x ∈ L' → Poset ℓ ℓ
+  -- fst (bar x hx) = Σ[ y ∈ fst L ] (↓∩ x hx y .fst)
+  -- _≤_ (snd (bar x hx)) (y1 , hy1) (y2 , hy2) = y1 ≤l y2
+  -- is-set (isPoset (snd (bar x hx))) = {!!}
+  -- is-prop-valued (isPoset (snd (bar x hx))) = {!!}
+  -- is-refl (isPoset (snd (bar x hx))) a = {!!}
+  -- is-trans (isPoset (snd (bar x hx))) a b c h1 h2 = {!!}
+  -- is-antisym (isPoset (snd (bar x hx))) a b h1 h2 = {!!}
+
+  -- foo : (x : fst L) → x ∈ L' → Category ℓ ℓ
+  -- foo x hx = PosetCategory (bar x hx)
+
+  -- open Pullback
+  -- open LimCone
+  -- open Cospan
+
+  -- blop : (H : (x : fst L) (hx : x ∈ L') → LimitsOfShape (foo x hx) C) → Pullbacks C
+  -- pbOb (blop H cspn) = {!!}
+  -- pbPr₁ (blop H cspn) = {!!}
+  -- pbPr₂ (blop H cspn) = {!!}
+  -- pbCommutes (blop H cspn) = {!!}
+  -- univProp (blop H cspn) = {!!}
 
 
  module condSquare (x y : ob BasisCat) (x∨y∈L' : fst x ∨l fst y ∈ L') where
