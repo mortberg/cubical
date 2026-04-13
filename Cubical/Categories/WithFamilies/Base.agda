@@ -90,6 +90,7 @@ record CwF (C : Category ℓ ℓ') (ℓTy ℓTm : Level) : Type (ℓ-suc (ℓ-ma
     ctxExtSubst-n : {Γ : Ctx} (A : Ty Γ) → ctxExtSubst A (wk A) (q A) ≡ IdSubst
     ctxExtSubst-n {Γ} A = retEq (ctxExtEquiv (ctxExt Γ A) Γ A) IdSubst
 
+    -- remove
     field
         special-ty-rev-assoc-proof : (Γ Γ' Δ : Ctx) (A : Ty Δ) (σ : Subst Γ Γ') (τ : Subst Γ' (ctxExt Δ A)) → (tmPresheaf ⟅ Γ , action tyPresheaf σ (action tyPresheaf (ctxExtEquiv Γ' Δ A .fst τ .fst) A) ⟆) .fst → (tmPresheaf ⟅ Γ , action tyPresheaf (comp' C (ctxExtEquiv Γ' Δ A .fst τ .fst) σ) A ⟆) .fst
             
