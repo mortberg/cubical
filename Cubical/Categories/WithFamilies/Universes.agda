@@ -3,10 +3,12 @@ module Cubical.Categories.WithFamilies.Universes where
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.HLevels
 open import Cubical.Foundations.Equiv
+open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Transport
 open import Cubical.Foundations.Function
 
 open import Cubical.Data.Unit
+open import Cubical.Data.Sigma.Properties
 
 open import Cubical.Categories.Category
 open import Cubical.Categories.Functor
@@ -80,9 +82,18 @@ module External (U : Type ℓ)
       goal = transport T₂≡T₁ goal'
     in goal))
 
-  UCwF .CwF.ctxExtEquiv Γ Δ A = {!idEquiv _!}
-  UCwF .CwF.special-ty-rev-assoc-proof = {!!}
-  UCwF .CwF.ctxExtEquivNat = {!!}
+  UCwF .CwF.ctxExtEquiv Γ Δ A = isoToEquiv Σ-Π-Iso
+    -- where
+    --   isom : Iso (Γ .fst → Σ (Δ .fst) (λ x → El (A x))) (Σ (Γ .fst → Δ .fst) (λ σ → (x : Γ .fst) → El (A (σ x))))
+    --   isom .Iso.fun F .fst x = F x .fst
+    --   isom .Iso.fun F .snd x = F x .snd
+    --   isom .Iso.inv (f₁ , f₂) x .fst = f₁ x
+    --   isom .Iso.inv (f₁ , f₂) x .snd = f₂ x
+    --   isom .Iso.sec _ = refl
+    --   isom .Iso.ret _ = refl
+
+  UCwF .CwF.special-ty-rev-assoc-proof _ _ _ _ _ _ x = x
+  UCwF .CwF.ctxExtEquivNat _ _ _ _ σ τ = ΣPathP (refl , (funExt (λ x → sym (substRefl {B = El} (snd (τ (σ x)))))))
 
 module Internal (U : Type ℓ)
          (USet : isSet U)
