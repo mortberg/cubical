@@ -1,4 +1,4 @@
-module Cubical.Categories.WithFamilies.Structure.Sigma where
+module Cubical.Categories.WithFamilies.Structure.Sigma.Base where
 
 open import Cubical.Foundations.Prelude
 

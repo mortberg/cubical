@@ -1,4 +1,4 @@
-module Cubical.Categories.WithFamilies.Universes where
+module Cubical.Categories.WithFamilies.FromUniverse where
 
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.HLevels
