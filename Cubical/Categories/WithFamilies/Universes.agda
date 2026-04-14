@@ -6,6 +6,7 @@ open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Transport
 open import Cubical.Foundations.Function
+open import Cubical.Foundations.GroupoidLaws
 
 open import Cubical.Data.Unit
 open import Cubical.Data.Sigma.Properties
@@ -16,7 +17,8 @@ open import Cubical.Categories.Limits.Terminal
 
 open import Cubical.Categories.Instances.Sets
 
-open import Cubical.Categories.Instances.Elements
+import Cubical.Categories.Instances.Elements as Els
+open Els.Contravariant
 
 open import Cubical.Categories.WithFamilies.Base
 
@@ -53,7 +55,7 @@ module External (U : Type ℓ)
   UCwF .CwF.ctxExtFunctor .F-ob (Γ , A) .snd = isSetΣ (Γ .snd) (λ x → ElSet (A x))
       
   UCwF .CwF.ctxExtFunctor .F-hom {Γ , A} {Δ , B} (f , p) (a , b) .fst = f a
-  UCwF .CwF.ctxExtFunctor .F-hom {Γ , A} {Δ , B} (f , p) (a , b) .snd = subst El (sym (funExt⁻ p a)) b
+  UCwF .CwF.ctxExtFunctor .F-hom {Γ , A} {Δ , B} (f , p) (a , b) .snd = subst⁻ El (funExt⁻ p a) b
   UCwF .CwF.ctxExtFunctor .F-id {Γ , A} = funExt (λ (a , b) → cong (λ m → a , m) (substRefl {B = El} b))
   UCwF .CwF.ctxExtFunctor .F-seq {Γ , A} {Δ , B} {Ε , C} (f , p) (g , q) = funExt (λ (a , b) → cong (λ m → g (f a) , m) (let
       p₁ : Path U (A a) (C (g (f a)))
@@ -104,7 +106,6 @@ module Internal (U : Type ℓ)
          (Sig : (a : U) → (El a → U) → U)
          (SigIso : (a : U) (b : El a → U) → El (Sig a b) ≃ (Σ[ x ∈ El a ] El (b x)))
          where
-
   UCat : Category ℓ ℓ'
   UCat .Category.ob = U
   UCat .Category.Hom[_,_] x y = El x → El y
@@ -114,6 +115,10 @@ module Internal (U : Type ℓ)
   UCat .Category.⋆IdR _ = refl
   UCat .Category.⋆Assoc _ _ _ = refl
   UCat .Category.isSetHom = isSet→ (ElSet _)
+
+  ctxExtFunctorHomDestructured : (Γ Δ : U) (A : El Γ → U) (B : El Δ → U) → (Σ[ f ∈ (El Γ → El Δ) ] (λ a → B (f a)) ≡ A) → (Σ[ x ∈ El Γ ] El (A x)) → (Σ[ x ∈ El Δ ] El (B x))
+  ctxExtFunctorHomDestructured Γ Δ A B (f , p) (x , a) .fst = f x
+  ctxExtFunctorHomDestructured Γ Δ A B (f , p) (x , a) .snd = subst⁻ El (funExt⁻ p x) a
 
   UCwF : CwF UCat (ℓ-max ℓ ℓ') ℓ'
   UCwF .CwF.emptyContext .fst = Unit
@@ -132,38 +137,64 @@ module Internal (U : Type ℓ)
                                   -- funExt (λ x → funExt (λ y → substRefl {B = El} (x y)))
   UCwF .CwF.tmPresheaf .F-seq {Γ , A} {Σ , B} (f , p) (g , q) i x y = substComposite El (funExt⁻ p (g y)) (funExt⁻ q y) (x (f (g y))) i
                                                                   --  funExt (λ x → funExt (λ y → substComposite El (funExt⁻ p (g y)) (funExt⁻ q y) (x (f (g y)))))
+  --                         f , p                       g , q
+  --           Γ , A  ------------------>  Δ , B  -------------------->  Ε , C
+  --
+  --       El (Sig Γ A)  ----------->  El (Sig Δ B)  -------------->  El (Sig Ε C)
+  --
+  --             |                           |                             |
+  --           ≃ |                         ≃ |                           ≃ |
+  --             |                           |                             |
+  --             V                           V                             V
+  --
+  -- Σ[ x ∈ El Γ ] El (A x)  --->  Σ[ x ∈ El Δ ] El (B x)  --->  Σ[ x ∈ El Ε ] El (C x)
 
--- ASCII art commutative diagrams code comments (and for own intuition)
   UCwF .CwF.ctxExtFunctor .F-ob (Γ , A) = Sig Γ A
-  UCwF .CwF.ctxExtFunctor .F-hom {Γ , A} {Δ , B} (f , p) x = invEq (SigIso Δ B) ((f (SigIso Γ A .fst x .fst)) , subst⁻ El (funExt⁻ p (SigIso Γ A .fst x .fst)) (SigIso Γ A .fst x .snd))
-                                                          -- invEq (SigIso Δ B) let (a , b) = SigIso Γ A .fst x in (f a) , (subst⁻ El (funExt⁻ p a) b)
-  UCwF .CwF.ctxExtFunctor .F-id {Γ , A} = funExt (λ x → cong
-                                                      (λ m → invEq (SigIso Γ A) ((SigIso Γ A .fst x .fst) , m))
-                                                      (substRefl {B = El} (SigIso Γ A .fst x .snd)) ∙ retEq (SigIso Γ A) x)
-  UCwF .CwF.ctxExtFunctor .F-seq {Γ , A} {Δ , B} {E , C} (f , p) (g , q) = funExt (λ x → let
-      (a , b) = SigIso Γ A .fst x
+  UCwF .CwF.ctxExtFunctor .F-hom {Γ , A} {Δ , B} (f , p) x = invEq (SigIso Δ B) (ctxExtFunctorHomDestructured Γ Δ A B (f , p) (SigIso Γ A .fst x))
+  UCwF .CwF.ctxExtFunctor .F-id {Γ , A} = funExt (λ x → cong (invEq (SigIso Γ A)) (ΣPathP (refl , (substRefl {B = El} (SigIso Γ A .fst x .snd)))) ∙ retEq (SigIso Γ A) x)
+  UCwF .CwF.ctxExtFunctor .F-seq {Γ , A} {Δ , B} {Ε , C} (f , p) (g , q) = funExt (λ x → (let
+      r : (Σ[ x ∈ El Γ ] El (A x)) → (Σ[ x ∈ El Ε ] El (C x))
+      r y = g (f (y .fst)) , subst⁻ El (funExt⁻ q (f (y .fst)) ∙ funExt⁻ p (y .fst)) (y .snd)
+      
+      s : (Σ[ x ∈ El Γ ] El (A x)) → (Σ[ x ∈ El Ε ] El (C x))
+      s = ctxExtFunctorHomDestructured Δ Ε B C (g , q) ∘ (SigIso Δ B .fst ∘ invEq (SigIso Δ B)) ∘ ctxExtFunctorHomDestructured Γ Δ A B (f , p)
+      
+      t : (Σ[ x ∈ El Γ ] El (A x)) → (Σ[ x ∈ El Ε ] El (C x))
+      t y = g (f (y .fst)) , subst⁻ El (funExt⁻ q (f (y .fst))) (subst⁻ El (funExt⁻ p (y .fst)) (y .snd))
 
-      goal1 : invEq (SigIso E C) (g (f (SigIso Γ A .fst x .fst)) , subst⁻ El (funExt⁻ (cong (λ h → h ∘ f) q ∙ p) (SigIso Γ A .fst x .fst)) (SigIso Γ A .fst x .snd))
-              ≡
-              invEq (SigIso E C) {!g!}
-      goal1 = {!!}
+      t' : (Σ[ x ∈ El Γ ] El (A x)) → (Σ[ x ∈ El Ε ] El (C x))
+      t' y = g (f (y .fst)) , subst⁻ El (sym (sym (funExt⁻ p (y .fst)) ∙ sym (funExt⁻ q (f (y .fst))))) (y .snd)
 
-      goal : -- UCwF .CwF.ctxExtFunctor .F-hom
-             --  (((Cubical.Categories.Instances.Elements.Contravariant.∫ᴾ
-             --     UCwF .CwF.tyPresheaf)
-             --    Category.⋆ (f , p))
-             --   (g , q))
-             --  x
-              invEq (SigIso E C) (g (f (SigIso Γ A .fst x .fst)) , subst⁻ El (funExt⁻ (cong (λ h → h ∘ f) q ∙ p) (SigIso Γ A .fst x .fst)) (SigIso Γ A .fst x .snd))
-              ≡
-              invEq (SigIso E C) ((g (SigIso Δ B .fst (UCwF .CwF.ctxExtFunctor .F-hom (f , p) x) .fst)) , (subst⁻ El (funExt⁻ q (SigIso Δ B .fst (UCwF .CwF.ctxExtFunctor .F-hom (f , p) x) .fst)) (SigIso Δ B .fst (UCwF .CwF.ctxExtFunctor .F-hom (f , p) x) .snd)))
-              -- UCwF .CwF.ctxExtFunctor .F-hom (g , q) (invEq (SigIso Δ B) ((f (SigIso Γ A .fst x .fst)) , (subst⁻ El (funExt⁻ p (SigIso Γ A .fst x .fst)) (SigIso Γ A .fst x .snd))))
-              -- UCwF .CwF.ctxExtFunctor .F-hom (g , q) (UCwF .CwF.ctxExtFunctor .F-hom (f , p) x)
-      goal = {!!} -- cong (λ m → invEq (SigIso E C) (g m , {!!})) {!!} ∙ {!!}
-    in goal)
+      s≡t : s ≡ t
+      s≡t = cong (λ m → ctxExtFunctorHomDestructured Δ Ε B C (g , q) ∘ m ∘ ctxExtFunctorHomDestructured Γ Δ A B (f , p)) (funExt (secEq (SigIso Δ B)))
 
-  UCwF .CwF.ctxExtEquiv = {!!}
+      r≡t' : r ≡ t'
+      r≡t' = funExt (λ y → cong (λ m → g (f (y .fst)) , subst⁻ El m (y .snd)) (sym (symDistr (sym (funExt⁻ p (y .fst))) (sym (funExt⁻ q (f (y .fst)))))))
 
-  UCwF .CwF.special-ty-rev-assoc-proof = {!!}
+      t'≡t : t' ≡ t
+      t'≡t = funExt (λ y → cong (λ m → g (f (y .fst)) , m) (substComposite El (sym (funExt⁻ p (y .fst))) (sym (funExt⁻ q (f (y .fst)))) (y .snd)))
 
-  UCwF .CwF.ctxExtEquivNat = {!!}
+      r≡s : r ≡ s
+      r≡s = r≡t' ∙∙ t'≡t ∙∙ sym s≡t
+    in cong (λ m → invEq (SigIso Ε C) (m (SigIso Γ A .fst x))) r≡s))
+
+  UCwF .CwF.ctxExtEquiv Γ Δ B = goal
+    where
+      goal' : (El Γ → Σ[ x ∈ El Δ ] El (B x)) ≃ (Σ[ σ ∈ (El Γ → El Δ) ] ((x : El Γ) → El (B (σ x))))
+      goal' = isoToEquiv Σ-Π-Iso
+
+      helper : (El Γ → El (Sig Δ B)) ≃ (El Γ → Σ[ x ∈ El Δ ] El (B x))
+      helper = isoToEquiv isom
+        where
+          isom : Iso (El Γ → El (Sig Δ B)) (El Γ → Σ[ x ∈ El Δ ] El (B x))
+          isom .Iso.fun f = SigIso Δ B .fst ∘ f
+          isom .Iso.inv f = invEq (SigIso Δ B) ∘ f
+          isom .Iso.sec f = cong (λ m → m ∘ f) (funExt (secEq (SigIso Δ B)))
+          isom .Iso.ret f = cong (λ m → m ∘ f) (funExt (retEq (SigIso Δ B)))
+      
+      goal : (El Γ → El (Sig Δ B)) ≃ (Σ[ σ ∈ (El Γ → El Δ) ] ((x : El Γ) → El (B (σ x))))
+      goal = compEquiv helper goal'
+
+  UCwF .CwF.special-ty-rev-assoc-proof _ _ _ _ _ _ a = a
+
+  UCwF .CwF.ctxExtEquivNat _ _ Δ A σ τ = ΣPathP (refl , funExt (λ x → sym (substRefl {B = El} (SigIso Δ A .fst (τ (σ x)) .snd))))
