@@ -102,7 +102,7 @@ module Internal (U : Type ℓ)
          (El : U → Type ℓ')
          (ElSet : (a : U) → isSet (El a))
          (Unit : U)
-         (UnitTerminal : (a : U) → isContr (El a → El Unit)) -- isContr (El Unit)
+         (UnitTerminal : isContr (El Unit))
          (Sig : (a : U) → (El a → U) → U)
          (SigIso : (a : U) (b : El a → U) → El (Sig a b) ≃ (Σ[ x ∈ El a ] El (b x)))
          where
@@ -122,7 +122,8 @@ module Internal (U : Type ℓ)
 
   UCwF : CwF UCat (ℓ-max ℓ ℓ') ℓ'
   UCwF .CwF.emptyContext .fst = Unit
-  UCwF .CwF.emptyContext .snd = UnitTerminal
+  UCwF .CwF.emptyContext .snd Γ .fst _ = UnitTerminal .fst
+  UCwF .CwF.emptyContext .snd Γ .snd σ = funExt (λ x → UnitTerminal .snd (σ x))
 
   UCwF .CwF.tyPresheaf .F-ob x .fst = El x → U
   UCwF .CwF.tyPresheaf .F-ob x .snd = isSet→ USet
