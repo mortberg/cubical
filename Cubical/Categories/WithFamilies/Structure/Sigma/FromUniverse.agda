@@ -34,7 +34,7 @@ module Internal (U : Type ℓ)
   U-Σ .Σ-Structure-CwF.sig-nat {Γ} {Δ} A B σ = funExt (λ x → cong (Sig (A (σ x))) (funExt (λ y → cong (λ m → B (invEq (SigIso Γ A) m)) (let
       r : Σ[ v ∈ El Γ ] El (A v)
       r = (σ x , y)
-      
+
       s : Σ[ v ∈ El Γ ] El (A v)
       s = σ x , subst⁻ El refl y
 
@@ -43,10 +43,10 @@ module Internal (U : Type ℓ)
 
       s≡r : s ≡ r
       s≡r = cong (λ m → σ x , m) (substRefl {B = El} y)
-      
+
       t≡s : t ≡ s
       t≡s = cong (ctxExtFunctorHomDestructured Δ Γ (λ x₁ → A (σ x₁)) A (σ , (λ _ x₁ → A (σ x₁)))) (secEq (SigIso Δ (λ x₁ → A (σ x₁))) (x , y))
-      
+
       goal : r ≡ t
       goal = sym (t≡s ∙ s≡r)
     in goal))))
@@ -56,11 +56,11 @@ module Internal (U : Type ℓ)
             → Σ ((x : El Γ) → El (A x)) (λ v → (x : El Γ) → El (B (invEq (SigIso Γ A) (x , v x))))
       fun F = (λ x → SigIso (A x) (λ a → B (invEq (SigIso Γ A) (x , a))) .fst (F x) .fst) , λ x → SigIso (A x) (λ a → B (invEq (SigIso Γ A) (x , a))) .fst (F x) .snd
 
-      inv : Σ ((x : El Γ) → El (A x)) (λ v → (x : El Γ) → El (B (invEq (SigIso Γ A) (x , v x)))) 
+      inv : Σ ((x : El Γ) → El (A x)) (λ v → (x : El Γ) → El (B (invEq (SigIso Γ A) (x , v x))))
             → ((x : El Γ) → El (Sig (A x) (λ a → B (invEq (SigIso Γ A) (x , a)))))
       inv (a , b) x = invEq (SigIso (A x) (λ a → B (invEq (SigIso Γ A) (x , a)))) (a x , b x)
 
-      sec : (s : Σ ((x : El Γ) → El (A x)) (λ v → (x : El Γ) → El (B (invEq (SigIso Γ A) (x , v x))))) → fun (inv s) ≡ s 
+      sec : (s : Σ ((x : El Γ) → El (A x)) (λ v → (x : El Γ) → El (B (invEq (SigIso Γ A) (x , v x))))) → fun (inv s) ≡ s
       sec (a , b) = let
           f : (a₁ : El Γ) → Σ (El (A a₁)) (λ x → El (B (invEq (SigIso Γ A) (a₁ , x))))
           f x = SigIso (A x) (λ a₁ → B (invEq (SigIso Γ A) (x , a₁))) .fst (invEq (SigIso (A x) (λ a₁ → B (invEq (SigIso Γ A) (x , a₁)))) (a x , b x))
@@ -132,11 +132,11 @@ module Internal (U : Type ℓ)
 
       u≡t : u ≡ t
       u≡t = cong (λ m → B (invEq (SigIso Δ A) (ctxExtFunctorHomDestructured Γ Δ (λ x₁ → A (σ x₁)) A (σ , (λ _ x₁ → A (σ x₁))) (SigIso Γ (λ x₁ → A (σ x₁)) .fst (invEq (SigIso Γ (λ x₁ → A (σ x₁))) (x , m)))))) (substRefl {B = El} (a (σ x)))
-      
+
       goal : r ≡ u
       goal = sym (u≡t ∙∙ t≡s ∙∙ s≡r)
     in goal)
-      
+
   U-Σ .Σ-Structure-CwF.sig-iso-nat {Γ} {Δ} A B a σ = goal
     where
       -- goal : ((λ x →
@@ -397,15 +397,23 @@ module Internal (U : Type ℓ)
       --              (λ a₁ → B (snd (SigIso Δ A) .equiv-proof (σ y , a₁) .fst .fst))
       --              .fst (a (σ y)) .snd)))
 
-      goal : {!U-Σ .Σ-Structure-CwF.sig-iso ((UCwF CwF.∘Ty A) σ)
-              ((UCwF CwF.∘Ty B) (CwF.⟨ UCwF , σ ⟩ A)) .fst
-              (subst (CwF.Tm UCwF Γ) (U-Σ .Σ-Structure-CwF.sig-nat A B σ)
-               ((UCwF CwF.[ a ]) σ))
-              ≡
-              ((UCwF CwF.[ U-Σ .Σ-Structure-CwF.sig-iso A B .fst a .fst ]) σ ,
-               subst (CwF.Tm UCwF Γ)
-               (U-Σ .Σ-Structure-CwF.ctxExtSubstSigmaSndEq A B
-                (U-Σ .Σ-Structure-CwF.sig-iso A B .fst a .fst) σ)
-               ((UCwF CwF.[ U-Σ .Σ-Structure-CwF.sig-iso A B .fst a .snd ]) σ))!}
+      LEFT : Σ-syntax (CwF.Tm UCwF Γ ((UCwF CwF.∘Ty A) σ))
+              (λ a₁ →
+                 CwF.Tm UCwF Γ
+                 ((UCwF CwF.∘Ty (UCwF CwF.∘Ty B) (CwF.⟨ UCwF , σ ⟩ A))
+                  (CwF.ctxExtSubst UCwF ((UCwF CwF.∘Ty A) σ) (CwF.IdSubst UCwF)
+                   (U-Σ .Σ-Structure-CwF.idsubst-action ((UCwF CwF.∘Ty A) σ) a₁))))
+      LEFT = (U-Σ .Σ-Structure-CwF.sig-iso ((UCwF CwF.∘Ty A) σ)
+                ((UCwF CwF.∘Ty B) (CwF.⟨ UCwF , σ ⟩ A)) .fst
+                (subst (CwF.Tm UCwF Γ) (U-Σ .Σ-Structure-CwF.sig-nat A B σ)
+                 ((UCwF CwF.[ a ]) σ)))
+                 
+      goal : Path {!!}
+              LEFT
+              (((UCwF CwF.[ U-Σ .Σ-Structure-CwF.sig-iso A B .fst a .fst ]) σ ,
+                 subst (CwF.Tm UCwF Γ)
+                 (U-Σ .Σ-Structure-CwF.ctxExtSubstSigmaSndEq A B
+                  (U-Σ .Σ-Structure-CwF.sig-iso A B .fst a .fst) σ)
+                 ((UCwF CwF.[ U-Σ .Σ-Structure-CwF.sig-iso A B .fst a .snd ]) σ)))
       goal = {!!}
-
+      -- ΣPathP ((funExt (λ x → {!!} ∙ sym (transportRefl _))) , {!!})
