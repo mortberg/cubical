@@ -101,3 +101,4 @@ record CwF (C : Category ℓ ℓ') (ℓTy ℓTm : Level) : Type (ℓ-suc (ℓ-ma
             (ctxExtEquiv Γ Δ A .fst (σ ⋆⟨ C ⟩ τ)) ≡
             (σ ⋆⟨ C ⟩ (ctxExtEquiv Γ' Δ A .fst τ .fst) ,
             special-ty-rev-assoc-proof Γ Γ' Δ A σ τ ((ctxExtEquiv Γ' Δ A .fst τ .snd) [ σ ]))
+

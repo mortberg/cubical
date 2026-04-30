@@ -25,40 +25,46 @@ record CwF (ℓOb ℓHom ℓTy ℓTm : Level) :
 
   field
 
-    -- Contexts and substitutions
+    -- | Contexts and substitutions
 
     C : Category ℓOb ℓHom
 
     emptyContext : Terminal C
 
-    -- Types
+    -- | Types
 
     ty : (Γ : ob C) → Type ℓTy
 
+    -- A[σ]
     substTy : {Γ' Γ : ob C} (A : ty Γ) (σ : C [ Γ' , Γ ])
             → -------------------------------------------
               ty Γ'
 
+    -- A[id] = A
     substTyId : {Γ : ob C} (A : ty Γ)
               → ---------------------
                 substTy A (id C) ≡ A
 
+    -- A[σ ∘ σ'] = A[σ][σ']
     substTyComp : {Γ'' Γ' Γ : ob C} (A : ty Γ) (σ' : C [ Γ'' , Γ' ]) (σ : C [ Γ' , Γ ])
                 → ---------------------------------------------------------------------
                   substTy A (σ ∘⟨ C ⟩ σ') ≡ substTy (substTy A σ) σ'
 
-    -- Terms
+    -- | Terms
 
     tm : (Γ : ob C) (A : ty Γ) → Type ℓTm
 
+    -- a[σ]
     substTm : {Γ' Γ : ob C} {A : ty Γ} (a : tm Γ A) (σ : C [ Γ' , Γ ])
             → --------------------------------------------------------
               tm Γ' (substTy A σ)
 
+    -- a[id] = a
     substTmId : {Γ : ob C} {A : ty Γ} (a : tm Γ A)
               → -------------------------------------------------------
                 PathP (λ i → tm Γ (substTyId A i)) (substTm a (id C)) a
 
+    -- a[σ ∘ σ'] = a[σ][σ']
     substTmComp : {Γ'' Γ' Γ : ob C} {A : ty Γ}
                   (a : tm Γ A) (σ' : C [ Γ'' , Γ' ]) (σ : C [ Γ' , Γ ])
                 → -----------------------------------------------------
@@ -66,21 +72,27 @@ record CwF (ℓOb ℓHom ℓTy ℓTm : Level) :
                         (substTm a (σ ∘⟨ C ⟩ σ'))
                         (substTm (substTm a σ) σ')
 
-    -- Comprehension object
+    -- | Comprehension objects
 
+    -- Γ.A
     ext : (Γ : ob C) (A : ty Γ) → ob C
 
+    -- p : Γ.A → Γ
     p : (Γ : ob C) (A : ty Γ) → C [ ext Γ A , Γ ]
 
+    -- q : A[p]
     q : (Γ : ob C) (A : ty Γ) → tm (ext Γ A) (substTy A (p Γ A))
 
+    -- ⟨σ , a⟩
     pair : {Γ' Γ : ob C} {A : ty Γ} (σ : C [ Γ' , Γ ]) (a : tm Γ' (substTy A σ))
          → C [ Γ' , ext Γ A ]
 
+    -- p ∘ ⟨ σ , a ⟩ = σ
     pPair : {Γ' Γ : ob C} {A : ty Γ} (σ : C [ Γ' , Γ ]) (a : tm Γ' (substTy A σ))
           → ---------------------------------------------------------------------
             p Γ A ∘⟨ C ⟩ pair σ a ≡ σ
 
+    -- q[⟨ σ , a ⟩] = a
     qPair : {Γ' Γ : ob C} {A : ty Γ} (σ : C [ Γ' , Γ ]) (a : tm Γ' (substTy A σ))
           → ---------------------------------------------------------------------
             PathP (λ i → tm Γ' ((sym (substTyComp A (pair σ a) (p Γ A))
@@ -88,12 +100,14 @@ record CwF (ℓOb ℓHom ℓTy ℓTm : Level) :
                   (substTm (q Γ A) (pair σ a))
                   a
 
+    -- ⟨ σ , a ⟩ ∘ σ' = ⟨ σ ∘ σ' , a[σ'] ⟩
     pairComp : {Γ'' Γ' Γ : ob C} {A : ty Γ}
                (σ' : C [ Γ'' , Γ' ]) (σ : C [ Γ' , Γ ]) (a : tm Γ' (substTy A σ))
              → ------------------------------------------------------------------
                pair σ a ∘⟨ C ⟩ σ' ≡
                pair (σ ∘⟨ C ⟩ σ') (subst⁻ (tm Γ'') (substTyComp A σ' σ) (substTm a σ'))
 
+    -- ⟨ p , q ⟩ = id
     pairId : (Γ : ob C) (A : ty Γ)
            → ---------------------------
              pair (p Γ A) (q Γ A) ≡ id C
@@ -111,7 +125,7 @@ record Σ-Structure-CwF {ℓOb ℓHom ℓTy ℓTm : Level} (cwf : CwF ℓOb ℓH
     pairΣ : {Γ : ob C} (A : ty Γ) (B : ty (ext Γ A))
             (a : tm Γ (substTy A (id C)))          -- TODO: Ok? Could also have a subst in b, but this might be nicer...
             (b : tm Γ (substTy B (pair (id C) a)))
-          → --------------------------------------------------------------------
+          → --------------------------------------
             tm Γ (ΣTy A B)
 
     fst : {Γ : ob C} {A : ty Γ} {B : ty (ext Γ A)} → tm Γ (ΣTy A B) → tm Γ A
@@ -129,11 +143,24 @@ record Σ-Structure-CwF {ℓOb ℓHom ℓTy ℓTm : Level} (cwf : CwF ℓOb ℓH
                                             (substTyComp A (p Γ' (substTy A σ)) σ)
                                             (q Γ' (substTy A σ)))))
 
-    substPairΣ : {!!}
+    -- (pair a b)[σ] = pair (a[σ]) (b[σ])
+    substPairΣ : {Γ' Γ : ob C} (A : ty Γ) (B : ty (ext Γ A)) (σ : C [ Γ' , Γ ])
+                 (a : tm Γ (substTy A (id C)))
+                 (b : tm Γ (substTy B (pair (id C) a)))
+               → --------------------------------------------------------------
+                 PathP (λ i → tm Γ' (substΣTy A B σ i))
+                       (substTm (pairΣ _ _ a b) σ)
+                       (pairΣ {!!} {!!} {!substTm a σ!} {!substTm b σ!})
 
-    substFst : {!!}
+    -- (fst c)[σ] = fst (c[σ])
+    substFst : {Γ' Γ : ob C} {A : ty Γ} {B : ty (ext Γ A)} (c : tm Γ (ΣTy A B))
+               (σ : C [ Γ' , Γ ])
+             → substTm (fst c) σ ≡ fst (subst (tm Γ') (substΣTy A B σ) (substTm c σ))
 
-    substSnd : {!!}
+    -- (snd c)[σ] = snd (c[σ])
+    substSnd : {Γ' Γ : ob C} {A : ty Γ} {B : ty (ext Γ A)} (c : tm Γ (ΣTy A B))
+               (σ : C [ Γ' , Γ ])
+             → substTm (snd c) σ ≡ {!!}
 
     fstPairΣ : {Γ : ob C} (A : ty Γ) (B : ty (ext Γ A))
                (a : tm Γ (substTy A (id C)))
@@ -152,4 +179,5 @@ record Σ-Structure-CwF {ℓOb ℓHom ℓTy ℓTm : Level} (cwf : CwF ℓOb ℓH
                            sym (cong (subst⁻ (tm Γ) (substTyId A)) (fstPairΣ A B a b))))
                      b
 
+    -- pair (fst c) (snd c) = c
     pairFstSnd : {!!}
