@@ -91,6 +91,8 @@ data Ty where
     → PathP (λ i → Tm (Γ , (A [ δ ]T')) ([][]T' {A = A} {δ = δ} {σ = π₁' id'} i)) (π₂' id') t₀
     → (ΣTy A B) [ δ ]T ≡ ΣTy (A [ δ ]T') (B [ (δ ∘' π₁' id') , t₀ ]T)
 
+
+
 _[_]T' = _[_]T
 ε'     = ε
 _,'_   = _,_
@@ -99,6 +101,8 @@ _∘'_   = _∘_
 π₁'    = π₁
 [][]T' = [][]T
 
+
+-- TODO: positive vs negative Sigma? Any difference?
 data Tm where
   _[_]t : Tm Δ A → (δ : Tms Γ Δ) → Tm Γ (A [ δ ]T)
   π₂    : (δ : Tms Γ (Δ , A)) → Tm Γ (A [ π₁ δ ]T)
@@ -106,6 +110,56 @@ data Tm where
   [id]t : {x : Tm Γ A} → PathP (λ i → Tm Γ ([id]T {A = A} i)) (x [ id ]t) x
   [][]t : {x : Tm Γ A} → PathP (λ i → Tm Γ ([][]T {A = A} {δ = δ} {σ = σ} i)) (x [ δ ]t [ σ ]t) (x [ δ ∘ σ ]t)
   π₂β   : PathP (λ i → Tm Γ (A [ π₁β {δ = δ} {x = x} i ]T)) (π₂ (δ , x)) x
+
+  pairΣTy : (a   : Tm Γ A)
+            (a1  : Tm Γ (A [ id ]T))
+            (pa1 : PathP (λ i → Tm Γ ([id]T {A = A} i)) a1 a)
+            (b   : Tm Γ (B [ id , a1 ]T))
+          → Tm Γ (ΣTy A B)
+
+  fstΣTy  : Tm Γ (ΣTy A B)
+          → Tm Γ A
+
+  sndΣTy  : (c   : Tm Γ (ΣTy A B))
+            (c1  : Tm Γ (A [ id ]T))
+            (pc1 : PathP (λ i → Tm Γ ([id]T {A = A} i)) c1 (fstΣTy c))
+          → Tm Γ (B [ id , c1 ]T)
+
+
+  -- Naturality
+  fst[] : ∀ {t₀}
+        → PathP (λ i → Tm (Γ , (A [ δ ]T')) ([][]T' {A = A} {δ = δ} {σ = π₁' id'} i)) (π₂' id') t₀
+        → (c : Tm Δ (ΣTy A B))
+          (cδ : Tm Γ (ΣTy (A [ δ ]T) (B [ (δ ∘ π₁ id) , t₀ ]T)))
+        -- TODO add path relating c and cδ...
+        → ((fstΣTy c) [ δ ]t) ≡ (fstΣTy cδ)
+
+  -- (fst c)[σ] = fst c[σ]
+  -- (snd c)[σ] = snd c[σ]
+  -- (pair a b)[σ] = pair a[σ] b[σ]
+
+
+  -- Computation rules:
+  fstPair : (a   : Tm Γ A)
+            (a1  : Tm Γ (A [ id ]T))
+            (pa1 : PathP (λ i → Tm Γ ([id]T {A = A} i)) a1 a)
+            (b   : Tm Γ (B [ id , a1 ]T))
+          → fstΣTy (pairΣTy a a1 pa1 b) ≡ a
+
+  sndPair : (a   : Tm Γ A)
+            (a1  : Tm Γ (A [ id ]T))
+            (pa1 : PathP (λ i → Tm Γ ([id]T {A = A} i)) a1 a)
+            (b   : Tm Γ (B [ id , a1 ]T))
+
+            -- Could be instantiated as a combination of fstPair and pa1...
+            (pa2 : PathP (λ i → Tm Γ ([id]T i)) a1 (fstΣTy (pairΣTy a a1 pa1 b)))
+          → sndΣTy (pairΣTy a a1 pa1 b) a1 pa2 ≡ b
+
+  -- Surjective pairing/eta:
+  surjPair : (c   : Tm Γ (ΣTy A B))
+             (c1  : Tm Γ (A [ id ]T))
+             (pc1 : PathP (λ i → Tm Γ ([id]T {A = A} i)) c1 (fstΣTy c))
+           → pairΣTy (fstΣTy c) c1 pc1 (sndΣTy c c1 pc1) ≡ c
 
   squash : isSet (Tm Γ A)
 
@@ -211,6 +265,16 @@ module _ {ℓ ℓ' ℓ'' ℓ'''} (M : Motives ℓ ℓ' ℓ'' ℓ''') where
           ((Σᴹ Aᴹ Bᴹ) [ δᴹ ]Tᴹ)
           (Σᴹ (Aᴹ [ δᴹ ]Tᴹ) (Bᴹ [ (δᴹ ∘ᴹ π₁ᴹ idᴹ) ▶ᴹ t₀ᴹ ]Tᴹ))
 
+      -- pairΣᴹ : Tmᴹ Γᴹ Aᴹ x → Tmᴹ (Γᴹ ,ᴹ Aᴹ) Bᴹ y → Tmᴹ Γᴹ (Σᴹ Aᴹ Bᴹ) (pairΣTy x y)
+      -- fstΣᴹ : Tmᴹ Γᴹ (Σᴹ Aᴹ Bᴹ) x → Tmᴹ Γᴹ Aᴹ (fstΣTy x)
+      -- sndΣᴹ : {c : Tm Γ (ΣTy A B)} (cᴹ : Tmᴹ Γᴹ (Σᴹ Aᴹ Bᴹ) c)
+      --         {c1 : Tm Γ (A [ id ]T)} (c1ᴹ : Tmᴹ Γᴹ (Aᴹ [ idᴹ ]Tᴹ) c1)
+      --         {p : PathP (λ i → Tm Γ ([id]T {A = A} i)) c1 (fstΣTy c)}
+      --         (pᴹ : PathP (λ i → Tmᴹ Γᴹ ([id]Tᴹ {Aᴹ = Aᴹ} i) (p i)) c1ᴹ (fstΣᴹ cᴹ))
+      --       → Tmᴹ Γᴹ (Bᴹ [ idᴹ ▶ᴹ c1ᴹ ]Tᴹ) (sndΣTy c c1 p)
+
+
+
     Con-elim : ∀ x → Conᴹ x
     Tms-elim : ∀ {Δ Γ} (σ : Tms Δ Γ) → Tmsᴹ (Con-elim Δ) (Con-elim Γ) σ
     Ty-elim  : ∀ {Γ} (A : Ty Γ) → Tyᴹ (Con-elim Γ) A
@@ -262,6 +326,11 @@ module _ {ℓ ℓ' ℓ'' ℓ'''} (M : Motives ℓ ℓ' ℓ'' ℓ''') where
       [id]tᴹ {xᴹ = Tm-elim x} i
     Tm-elim ([][]t {δ = δ} {σ} {x} i) = [][]tᴹ {δᴹ = Tms-elim δ} {σᴹ = Tms-elim σ} {xᴹ = Tm-elim x} i
     Tm-elim (π₂β {δ = δ} {x = x} i)   = π₂βᴹ {δᴹ = Tms-elim δ} {xᴹ = Tm-elim x} i
+
+    -- Tm-elim (pairΣTy x y) = pairΣᴹ (Tm-elim x) (Tm-elim y)
+    -- Tm-elim (fstΣTy x) = fstΣᴹ (Tm-elim x)
+    -- Tm-elim (sndΣTy c c₁ p) = sndΣᴹ (Tm-elim c) (Tm-elim c₁) λ j → Tm-elim (p j)
+
     Tm-elim (squash x y p q i j) = isSet→SquareP (λ i j → Tmᴹ-is-set {x = squash x y p q i j}) (λ i → Tm-elim (p i)) (λ i → Tm-elim (q i)) (λ i → Tm-elim x) (λ i → Tm-elim y) i j
 
     Σ[]-case {B = B} t₀ x i =
@@ -321,6 +390,12 @@ module Internal (U : Type ℓ)
          (ΣPathP ((cong δᴹ (cong fst (sym (SigIso _ _ .sec (x , y)))))
                  , symP ( sym (funExt⁻ h (SigIso _ _ .inv (x , y)))
                         ◁ cong snd (SigIso _ _ .sec (x , y)))))))))
+  -- U-model .pairΣᴹ x y ρ = SigIso _ _ .inv ((x ρ) , y (SigIso _ _ .inv (ρ , (x ρ))))
+  -- U-model .fstΣᴹ x ρ = SigIso _ _ .fun (x ρ) .fst
+  -- U-model .sndΣᴹ {Aᴹ = Aᴹ} {Bᴹ = Bᴹ} c c1 p ρ = transport⁻ (λ i → El (Bᴹ (SigIso _ _ .inv (ρ , p i ρ)))) rem
+  --   where
+  --   rem : El (Bᴹ (SigIso _ _ .inv (ρ , SigIso (Aᴹ ρ) (λ y → Bᴹ (SigIso _ _ .inv (ρ , y))) .fun (c ρ) .fst)))
+  --   rem = SigIso _ _ .fun (c ρ) .snd
 
   Std-con : Con → Type ℓ'
   Std-con Γ = El (Con-elim U-model Γ)

@@ -45,9 +45,9 @@ private
   _[_]T' : Ty Δ → Tms Γ Δ → Ty Γ
   _[_]t' : Tm Δ A → (δ : Tms Γ Δ) → Tm Γ (A [ δ ]T')
 
-  ε'   : Tms Γ []
-  _,'_ : (δ : Tms Γ Δ) → Tm Γ (A [ δ ]T') → Tms Γ (Δ , A)
-  id'  : Tms Γ Γ
+--  ε'   : Tms Γ []
+--  _,'_ : (δ : Tms Γ Δ) → Tm Γ (A [ δ ]T') → Tms Γ (Δ , A)
+--  id'  : Tms Γ Γ
   _∘'_ : Tms Δ Θ → Tms Γ Δ → Tms Γ Θ
   π₁'  : Tms Γ (Δ , A) → Tms Γ Δ
   [][]T' : A [ δ ]T' [ σ ]T' ≡ A [ δ ∘' σ ]T'
@@ -85,9 +85,9 @@ data Ty where
   squash : isSet (Ty Γ)
 
 _[_]T' = _[_]T
-ε'     = ε
-_,'_   = _,_
-id'    = id
+--ε'     = ε
+--_,'_   = _,_
+--id'    = id
 _∘'_   = _∘_
 π₁'    = π₁
 [][]T' = [][]T
