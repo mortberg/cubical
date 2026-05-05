@@ -91,8 +91,6 @@ data Ty where
     → PathP (λ i → Tm (Γ , (A [ δ ]T')) ([][]T' {A = A} {δ = δ} {σ = π₁' id'} i)) (π₂' id') t₀
     → (ΣTy A B) [ δ ]T ≡ ΣTy (A [ δ ]T') (B [ (δ ∘' π₁' id') , t₀ ]T)
 
-
-
 _[_]T' = _[_]T
 ε'     = ε
 _,'_   = _,_
@@ -125,19 +123,46 @@ data Tm where
             (pc1 : PathP (λ i → Tm Γ ([id]T {A = A} i)) c1 (fstΣTy c))
           → Tm Γ (B [ id , c1 ]T)
 
-
-  -- Naturality
+  -- Naturalities
+  -- (fst c)[δ] = fst c[δ]
   fst[] : ∀ {t₀}
-        → PathP (λ i → Tm (Γ , (A [ δ ]T')) ([][]T' {A = A} {δ = δ} {σ = π₁' id'} i)) (π₂' id') t₀
+        → (p : PathP (λ i → Tm (Γ , (A [ δ ]T)) ([][]T {A = A} {δ = δ} {σ = π₁' id} i)) (π₂' id) t₀)
         → (c : Tm Δ (ΣTy A B))
           (cδ : Tm Γ (ΣTy (A [ δ ]T) (B [ (δ ∘ π₁ id) , t₀ ]T)))
-        -- TODO add path relating c and cδ...
+          (pcδ : PathP (λ i → Tm Γ (ΣTy[] {B = B} p i)) (c [ δ ]t) cδ)
         → ((fstΣTy c) [ δ ]t) ≡ (fstΣTy cδ)
 
-  -- (fst c)[σ] = fst c[σ]
-  -- (snd c)[σ] = snd c[σ]
-  -- (pair a b)[σ] = pair a[σ] b[σ]
+  -- (snd c)[δ] = snd c[δ]
+  snd[] : ∀ {t₀}
+        → (p    : PathP (λ i → Tm (Γ , (A [ δ ]T)) ([][]T {A = A} {δ = δ} {σ = π₁' id} i)) (π₂' id) t₀)
+        → (c    : Tm Δ (ΣTy A B))
+          (c1   : Tm Δ (A [ id ]T))
+          (pc1  : PathP (λ i → Tm Δ ([id]T {A = A} i)) c1 (fstΣTy c))
+          (cδ   : Tm Γ (ΣTy (A [ δ ]T) (B [ (δ ∘ π₁ id) , t₀ ]T)))
+          (pcδ  : PathP (λ i → Tm Γ (ΣTy[] {B = B} p i)) (c [ δ ]t) cδ)
+          (c1δ  : Tm Γ ((A [ δ ]T) [ id ]T))
+          (pc1δ : PathP (λ i → Tm Γ ([id]T {A = A [ δ ]T} i)) c1δ (fstΣTy cδ))
 
+          -- TODO: ugh!
+          (foo : (B [ id , c1 ]T) [ δ ]T ≡ (B [ (δ ∘ π₁ id) , t₀ ]T) [ id , c1δ ]T)
+          → PathP (λ i → Tm Γ (foo i)) ((sndΣTy c c1 pc1) [ δ ]t) (sndΣTy cδ c1δ pc1δ)
+
+  -- (pair a b)[δ] = pairb a[δ] b[δ]
+  pair[] : ∀ {t₀}
+         → (p    : PathP (λ i → Tm (Δ , (A [ δ ]T)) ([][]T {A = A} {δ = δ} {σ = π₁' id} i)) (π₂' id) t₀)(a   : Tm Γ A)
+           (aδ  : Tm Δ (A [ δ ]T))
+           (paδ : a [ δ ]t ≡ aδ)
+           (a1  : Tm Γ (A [ id ]T))
+           (aδ1 : Tm Δ ((A [ δ ]T) [ id ]T))
+           (paδ1 : PathP (λ i → Tm Δ ([id]T {A = A [ δ ]T} i)) aδ1 aδ)
+           (pa1 : PathP (λ i → Tm Γ ([id]T {A = A} i)) a1 a)
+           (b   : Tm Γ (B [ id , a1 ]T))
+           (bδ  : Tm Δ ((B [ (δ ∘' π₁' id') , t₀ ]T) [ id , aδ1 ]T))
+
+           -- UGH!
+           (foo : ((B [ id , a1 ]T) [ δ ]T) ≡ ((B [ (δ ∘' π₁' id') , t₀ ]T) [ id , aδ1 ]T))
+           (pbδ : PathP (λ i → Tm Δ (foo i)) (b [ δ ]t) bδ)
+         → PathP (λ i → Tm Δ (ΣTy[] {B = B} p i)) ((pairΣTy a a1 pa1 b) [ δ ]t) (pairΣTy aδ aδ1 paδ1 bδ)
 
   -- Computation rules:
   fstPair : (a   : Tm Γ A)
@@ -176,7 +201,7 @@ vs : Tm Γ A → Tm (Γ , B) (A [ wk ]T)
 vs x = x [ wk ]t
 
 
-
+{-
 record Motives ℓ ℓ' ℓ'' ℓ''' : Type (ℓ-suc (ℓ-max ℓ (ℓ-max ℓ' (ℓ-max ℓ'' ℓ''')))) where
   field
     Conᴹ : Con → Type ℓ
@@ -408,3 +433,4 @@ module Internal (U : Type ℓ)
 
   Std-tm : ∀ {Δ} {A : Ty Δ} (x : Tm Δ A) (γ : Std-con Δ) → Std-ty A γ
   Std-tm x γ = Tm-elim U-model x γ
+-}
