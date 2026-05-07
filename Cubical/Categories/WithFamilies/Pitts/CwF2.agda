@@ -88,11 +88,14 @@ module _ {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
           → ---------------------------------------------
             p ∘ ⟨ σ , a ⟩ ≡ σ
 
+      silly : {A : Ty Γ} (σ : Δ ⟶ Γ)
+              (a : Tm Δ (A [ σ ]Ty))
+            → A [ p ]Ty [ ⟨ σ , a ⟩ ]Ty ≡ A [ σ ]Ty
+
       q⟨⟩ : {A : Ty Γ} (σ : Δ ⟶ Γ)
             (a : Tm Δ (A [ σ ]Ty))
-            (p : (A [ p ]Ty) [ ⟨ σ , a ⟩ ]Ty ≡ A [ σ ]Ty)
           → -----------------------------------------------
-            PathP (λ i → Tm Δ (p i)) ( q [ ⟨ σ , a ⟩ ]Tm) a
+            PathP (λ i → Tm Δ (silly σ a i)) ( q [ ⟨ σ , a ⟩ ]Tm) a
 
       ⟨⟩∘ : {A : Ty Γ} (σ' : Θ ⟶ Δ) (σ : Δ ⟶ Γ) (a : Tm Δ (A [ σ ]Ty))
 
@@ -184,8 +187,11 @@ module _ {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
                (aσ : Tm Δ (A [ σ ]Ty [ id ]Ty))
                (paσ  : PathP (λ i → Tm Δ ([id]Ty (A [ σ ]Ty) (~ i))) (a [ σ ]Tm) aσ)
                (b : Tm Γ (B [ ⟨ id , a' ⟩ ]Ty))
-               {bσ : Tm Δ ((B [ ⟨ σ ∘ p , q' ⟩ ]Ty) [ ⟨ id , aσ ⟩ ]Ty)}
+               (bσ : Tm Δ ((B [ ⟨ σ ∘ p , q' ⟩ ]Ty) [ ⟨ id , aσ ⟩ ]Ty))
+
+               -- Make this a silly coercion?
                (p : B [ ⟨ id , a' ⟩ ]Ty [ σ ]Ty ≡ B [ ⟨ σ ∘ p , q' ⟩ ]Ty [ ⟨ id , aσ ⟩ ]Ty)
+
                (pbσ : PathP (λ i → Tm Δ (p i)) (b [ σ ]Tm) bσ)
              → ----------------------------------------------------------------------------
                PathP (λ i → Tm Δ (ΣTy[] {B = B} σ q' pq' i))
@@ -213,6 +219,8 @@ module _ {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
               (pcσ : PathP (λ i → Tm Δ (ΣTy[] {B = B} σ q' pq' i)) (c [ σ ]Tm) cσ)
               (fstcσ : Tm Δ ((A [ σ ]Ty) [ id ]Ty))
               (pfstcσ : PathP (λ i → Tm Δ ([id]Ty (A [ σ ]Ty) (~ i))) (fst cσ) fstcσ)
+
+              -- TODO: make this a silly coercion?
               (p : B [ ⟨ id , fstc ⟩ ]Ty [ σ ]Ty ≡ B [ ⟨ σ ∘ p , q' ⟩ ]Ty [ ⟨ id , fstcσ ⟩ ]Ty)
             → ---------------------------------------------------------------------------------
               PathP (λ i → Tm Δ (p i)) ((snd c fstc pfstc) [ σ ]Tm) (snd cσ fstcσ pfstcσ)
@@ -269,7 +277,7 @@ module V {ℓ : Level} where
 
   open import Cubical.Data.IterativeSets.Base renaming (V⁰ to V ; El⁰ to El ; isSetEl⁰ to isSetEl)
   open import Cubical.Data.IterativeSets.Sigma
-  
+
   open Category
 
   VCat : Category (ℓ-suc ℓ) ℓ
@@ -300,7 +308,8 @@ module V {ℓ : Level} where
   VCwF .q                  = snd
   VCwF .⟨_,_⟩ σ a x        = (σ x) , a x
   VCwF .p⟨⟩ σ a            = refl
-  VCwF .q⟨⟩ σ a p          = funExt (λ x → toPathP (λ i → {!transp (λ j → El (p (~ i ∘ir j) x)) i (a x)!}))
+  VCwF .silly σ a          = refl
+  VCwF .q⟨⟩ σ a            = refl
   VCwF .⟨⟩∘ σ' σ a pa' i x = σ (σ' x) , pa' (~ i) x
   VCwF .⟨p,q⟩ _            = refl
 
