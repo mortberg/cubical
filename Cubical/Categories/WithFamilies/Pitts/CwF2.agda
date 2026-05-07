@@ -1,4 +1,4 @@
--- {-# OPTIONS --safe #-}
+{-# OPTIONS --lossy-unification #-}
 
 module Cubical.Categories.WithFamilies.Pitts.CwF2 where
 
@@ -35,8 +35,8 @@ module _ {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
   record CwF (ℓTy ℓTm : Level) :
              Type (ℓ-suc (ℓ-max ℓOb (ℓ-max ℓHom (ℓ-max ℓTy  ℓTm)))) where
     field
-      -- Empty context
-      ⟨⟩ : Terminal C
+      -- Empty context; TODO: include again
+--      ⟨⟩ : Terminal C
 
       -- | Types
 
@@ -120,8 +120,8 @@ module _ {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
 
       pair : {A : Ty Γ} {B : Ty (Γ ⋆ A)}
              (a : Tm Γ A)
-             {a' : Tm Γ (A [ id ]Ty)}
-             (pa' : PathP (λ i → Tm Γ ([id]Ty A i)) a' a)
+             (a' : Tm Γ (A [ id ]Ty))
+             (pa' : PathP (λ i → Tm Γ ([id]Ty A (~ i))) a a')
              (b : Tm Γ (B [ ⟨ id , a' ⟩ ]Ty))
            → --------------------------------------------
              Tm Γ (ΣTy A B)
@@ -133,129 +133,186 @@ module _ {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
 
       snd : {A : Ty Γ} {B : Ty (Γ ⋆ A)}
             (c : Tm Γ (ΣTy A B))
-            {fstc : Tm Γ (A [ id ]Ty)}
-            (pfstc : PathP (λ i → Tm Γ ([id]Ty A i)) fstc (fst c))
+            (fstc : Tm Γ (A [ id ]Ty))
+            (pfstc : PathP (λ i → Tm Γ ([id]Ty A (~ i))) (fst c) fstc)
           → ------------------------------------------------------
             Tm Γ (B [ ⟨ id , fstc ⟩ ]Ty)
 
       -- Computation rules
       fstPair : {A : Ty Γ} {B : Ty (Γ ⋆ A)}
                 (a : Tm Γ A)
-                {a' : Tm Γ (A [ id ]Ty)}
-                (pa' : PathP (λ i → Tm Γ ([id]Ty A i)) a' a)
+                (a' : Tm Γ (A [ id ]Ty))
+                (pa' : PathP (λ i → Tm Γ ([id]Ty A (~ i))) a a')
                 (b : Tm Γ (B [ ⟨ id , a' ⟩ ]Ty))
               → --------------------------------------------
-                fst (pair a pa' b) ≡ a
+                fst (pair a a' pa' b) ≡ a
 
       sndPair : {A : Ty Γ} {B : Ty (Γ ⋆ A)}
                 (a : Tm Γ A)
-                {a' : Tm Γ (A [ id ]Ty)}
-                (pa' : PathP (λ i → Tm Γ ([id]Ty A i)) a' a)
+                (a' : Tm Γ (A [ id ]Ty))
+                (pa' : PathP (λ i → Tm Γ ([id]Ty A (~ i))) a a')
                 (b : Tm Γ (B [ ⟨ id , a' ⟩ ]Ty))
-                {fstc : Tm Γ (A [ id ]Ty)}
-                (pfstc : PathP (λ i → Tm Γ ([id]Ty A i)) fstc (fst (pair a pa' b)))
+                (fstc : Tm Γ (A [ id ]Ty))
+                (pfstc : PathP (λ i → Tm Γ ([id]Ty A (~ i))) (fst (pair a a' pa' b)) fstc)
                 (pfstca' : fstc ≡ a')
               → ------------------------------------------------------------------------------
-                PathP (λ i → Tm Γ ((B [ ⟨ id , pfstca' i ⟩ ]Ty))) (snd (pair a pa' b) pfstc) b
+                PathP (λ i → Tm Γ ((B [ ⟨ id , pfstca' i ⟩ ]Ty))) (snd (pair a a' pa' b) fstc pfstc) b
 
 
       -- Uniqueness/eta rule:
       pairFstSnd : {A : Ty Γ} {B : Ty (Γ ⋆ A)}
                    (c : Tm Γ (ΣTy A B))
-                   {fstc : Tm Γ (A [ id ]Ty)}
-                   (pfstc : PathP (λ i → Tm Γ ([id]Ty A i)) fstc (fst c))
+                   (fstc : Tm Γ (A [ id ]Ty))
+                   (pfstc : PathP (λ i → Tm Γ ([id]Ty A (~ i))) (fst c) fstc)
                  → ------------------------------------------------------
-                   pair (fst c) pfstc (snd c pfstc) ≡ c
+                   pair (fst c) fstc pfstc (snd c fstc pfstc) ≡ c
 
       -- Naturality laws
       ΣTy[] : {A : Ty Γ} {B : Ty (Γ ⋆ A)} (σ : Δ ⟶ Γ)
-              {q' : Tm (Δ ⋆ A [ σ ]Ty) (A [ σ ∘ p ]Ty)}
-              (pq' : PathP (λ i → Tm  (Δ ⋆ A [ σ ]Ty) ([][]Ty A p σ i)) q' q)
+              (q' : Tm (Δ ⋆ A [ σ ]Ty) (A [ σ ∘ p ]Ty))
+              (pq' : PathP (λ i → Tm  (Δ ⋆ A [ σ ]Ty) ([][]Ty A p σ (~ i))) q q')
             → ---------------------------------------------------------------
               (ΣTy A B) [ σ ]Ty ≡ ΣTy (A [ σ ]Ty) (B [ ⟨ σ ∘ p , q' ⟩ ]Ty)
 
       -- (pair a b)[σ] = pair (a[σ]) (b[σ])
       pair[] : {A : Ty Γ} {B : Ty (Γ ⋆ A)} (σ : Δ ⟶ Γ)
-               {q' : Tm (Δ ⋆ A [ σ ]Ty) (A [ σ ∘ p ]Ty)}
-               (pq' : PathP (λ i → Tm  (Δ ⋆ A [ σ ]Ty) ([][]Ty A p σ i)) q' q)
+               (q' : Tm (Δ ⋆ A [ σ ]Ty) (A [ σ ∘ p ]Ty))
+               (pq' : PathP (λ i → Tm  (Δ ⋆ A [ σ ]Ty) ([][]Ty A p σ (~ i))) q q')
                (a : Tm Γ A)
-               {a' : Tm Γ (A [ id ]Ty)}
-               (pa' : PathP (λ i → Tm Γ ([id]Ty A i)) a' a)
+               (a' : Tm Γ (A [ id ]Ty))
+               (pa' : PathP (λ i → Tm Γ ([id]Ty A (~ i))) a a')
                (aσ : Tm Δ (A [ σ ]Ty [ id ]Ty))
-               (paσ  : PathP (λ i → Tm Δ ([id]Ty (A [ σ ]Ty) i)) aσ (a [ σ ]Tm))
+               (paσ  : PathP (λ i → Tm Δ ([id]Ty (A [ σ ]Ty) (~ i))) (a [ σ ]Tm) aσ)
                (b : Tm Γ (B [ ⟨ id , a' ⟩ ]Ty))
                {bσ : Tm Δ ((B [ ⟨ σ ∘ p , q' ⟩ ]Ty) [ ⟨ id , aσ ⟩ ]Ty)}
                (p : B [ ⟨ id , a' ⟩ ]Ty [ σ ]Ty ≡ B [ ⟨ σ ∘ p , q' ⟩ ]Ty [ ⟨ id , aσ ⟩ ]Ty)
                (pbσ : PathP (λ i → Tm Δ (p i)) (b [ σ ]Tm) bσ)
              → ----------------------------------------------------------------------------
-               PathP (λ i → Tm Δ (ΣTy[] {B = B} σ pq' i))
-                     ((pair a pa' b) [ σ ]Tm)
-                     (pair (a [ σ ]Tm) paσ bσ)
+               PathP (λ i → Tm Δ (ΣTy[] {B = B} σ q' pq' i))
+                     ((pair a a' pa' b) [ σ ]Tm)
+                     (pair (a [ σ ]Tm) aσ paσ bσ)
 
       -- (fst c)[σ] = fst (c[σ])
       fst[] : {A : Ty Γ} {B : Ty (Γ ⋆ A)} (σ : Δ ⟶ Γ)
               (c : Tm Γ (ΣTy A B))
-              {q' : Tm (Δ ⋆ A [ σ ]Ty) (A [ σ ∘ p ]Ty)}
-              (pq' : PathP (λ i → Tm  (Δ ⋆ A [ σ ]Ty) ([][]Ty A p σ i)) q' q)
+              (q' : Tm (Δ ⋆ A [ σ ]Ty) (A [ σ ∘ p ]Ty))
+              (pq' : PathP (λ i → Tm  (Δ ⋆ A [ σ ]Ty) ([][]Ty A p σ (~ i))) q q')
               (cσ : Tm Δ (ΣTy (A [ σ ]Ty) (B [ ⟨ σ ∘ p , q' ⟩ ]Ty)))
-              (pcσ : PathP (λ i → Tm Δ (ΣTy[] {B = B} σ pq' i)) (c [ σ ]Tm) cσ)
+              (pcσ : PathP (λ i → Tm Δ (ΣTy[] {B = B} σ q' pq' i)) (c [ σ ]Tm) cσ)
             → -----------------------------------------------------------------
               (fst c) [ σ ]Tm ≡ fst cσ
 
       -- (snd c)[σ] = snd (c[σ])
       snd[] : {A : Ty Γ} {B : Ty (Γ ⋆ A)} (σ : Δ ⟶ Γ)
               (c : Tm Γ (ΣTy A B))
-              {q' : Tm (Δ ⋆ A [ σ ]Ty) (A [ σ ∘ p ]Ty)}
-              (pq' : PathP (λ i → Tm  (Δ ⋆ A [ σ ]Ty) ([][]Ty A p σ i)) q' q)
-              {fstc : Tm Γ (A [ id ]Ty)}
-              (pfstc : PathP (λ i → Tm Γ ([id]Ty A i)) fstc (fst c))
+              (q' : Tm (Δ ⋆ A [ σ ]Ty) (A [ σ ∘ p ]Ty))
+              (pq' : PathP (λ i → Tm  (Δ ⋆ A [ σ ]Ty) ([][]Ty A p σ (~ i))) q q')
+              (fstc : Tm Γ (A [ id ]Ty))
+              (pfstc : PathP (λ i → Tm Γ ([id]Ty A (~ i))) (fst c) fstc)
               (cσ : Tm Δ (ΣTy (A [ σ ]Ty) (B [ ⟨ σ ∘ p , q' ⟩ ]Ty)))
-              (pcσ : PathP (λ i → Tm Δ (ΣTy[] {B = B} σ pq' i)) (c [ σ ]Tm) cσ)
+              (pcσ : PathP (λ i → Tm Δ (ΣTy[] {B = B} σ q' pq' i)) (c [ σ ]Tm) cσ)
               (fstcσ : Tm Δ ((A [ σ ]Ty) [ id ]Ty))
-              (pfstcσ : PathP (λ i → Tm Δ ([id]Ty (A [ σ ]Ty) i)) fstcσ (fst cσ))
+              (pfstcσ : PathP (λ i → Tm Δ ([id]Ty (A [ σ ]Ty) (~ i))) (fst cσ) fstcσ)
               (p : B [ ⟨ id , fstc ⟩ ]Ty [ σ ]Ty ≡ B [ ⟨ σ ∘ p , q' ⟩ ]Ty [ ⟨ id , fstcσ ⟩ ]Ty)
             → ---------------------------------------------------------------------------------
-              PathP (λ i → Tm Δ (p i)) ((snd c pfstc) [ σ ]Tm) (snd cσ pfstcσ)
+              PathP (λ i → Tm Δ (p i)) ((snd c fstc pfstc) [ σ ]Tm) (snd cσ fstcσ pfstcσ)
 
-module Tarski (U : Type ℓ)
-              (isSetU : isSet U)
-              (El : U → Type ℓ')
-              (isSetEl : (a : U) → isSet (El a))
-              (Unit : U)
-              (UnitTerminal : isContr (El Unit))
-              (Sig : (a : U) → (El a → U) → U)
-              (SigIso : (a : U) (b : El a → U) → Iso (El (Sig a b)) (Σ[ x ∈ El a ] El (b x))) where
+-- module Tarski (U : Type ℓ)
+--               (isSetU : isSet U)
+--               (El : U → Type ℓ')
+--               (isSetEl : (a : U) → isSet (El a))
+--               (Unit : U)
+--               (UnitTerminal : isContr (El Unit))
+--               (Sig : (a : U) → (El a → U) → U)
+--               (SigIso : (a : U) (b : El a → U) → Iso (El (Sig a b)) (Σ[ x ∈ El a ] El (b x))) where
 
+--   open Category
+
+--   UCtx : Category ℓ ℓ'
+--   UCtx .ob       = U
+--   UCtx .Hom[_,_] = λ Δ Γ → El Δ → El Γ
+--   UCtx .id       = λ x → x
+--   UCtx ._⋆_      = λ f g x → g (f x)
+--   UCtx .⋆IdL     = λ _ → refl
+--   UCtx .⋆IdR     = λ _ → refl
+--   UCtx .⋆Assoc   = λ _ _ _ → refl
+--   UCtx .isSetHom = isSet→ (isSetEl _)
+
+--   open CwF
+--   open Iso
+
+--   UCwF : CwF UCtx (ℓ-max ℓ ℓ') ℓ'
+--   UCwF .⟨⟩           = Unit , (λ _ → isContrΠ (λ _ → UnitTerminal))
+--   UCwF .Ty Γ         = El Γ → U
+--   UCwF ._[_]Ty A σ x = A (σ x)
+--   UCwF .[id]Ty _     = refl
+--   UCwF .[][]Ty _ _ _ = refl
+--   UCwF .Tm Γ A       = (x : El Γ) → El (A x)
+--   UCwF ._[_]Tm a σ x = a (σ x)
+--   UCwF .[id]Tm _     = refl
+--   UCwF .[][]Tm _ _ _ = refl
+--   UCwF ._⋆_          = Sig
+--   UCwF .p            = λ x → SigIso _ _ .fun x .fst
+--   UCwF .q            = λ x → SigIso _ _ .fun x .snd
+--   UCwF .⟨_,_⟩        = λ σ a x → SigIso _ _ .inv (σ x , a x)
+--   UCwF .p⟨⟩          = λ σ a i x → fst (SigIso _ _ .sec (σ x , a x) i)
+--   UCwF .q⟨⟩          = λ σ a p → funExt (λ x → {!cong snd (SigIso _ _ .sec (σ x , a x))!})
+--   UCwF .⟨⟩∘          = {!!}
+--   UCwF .⟨p,q⟩        = {!!}
+
+module _ {A : Type ℓ} {x : A} {P : ∀ y → x ≡ y → Type ℓ'} (d : P x refl) where
+
+  J>Refl : J>_ {P = P} d x refl ≡ d
+  J>Refl = transportRefl d
+
+module V {ℓ : Level} where
+
+  open import Cubical.Data.IterativeSets.Base renaming (V⁰ to V ; El⁰ to El ; isSetEl⁰ to isSetEl)
+  open import Cubical.Data.IterativeSets.Sigma
+  
   open Category
 
-  UCtx : Category ℓ ℓ'
-  UCtx .ob       = U
-  UCtx .Hom[_,_] = λ Δ Γ → El Δ → El Γ
-  UCtx .id       = λ x → x
-  UCtx ._⋆_      = λ f g x → g (f x)
-  UCtx .⋆IdL     = λ _ → refl
-  UCtx .⋆IdR     = λ _ → refl
-  UCtx .⋆Assoc   = λ _ _ _ → refl
-  UCtx .isSetHom = isSet→ (isSetEl _)
+  VCat : Category (ℓ-suc ℓ) ℓ
+  VCat .ob       = V
+  VCat .Hom[_,_] = λ Δ Γ → El Δ → El Γ
+  VCat .id       = λ x → x
+  VCat ._⋆_      = λ f g x → g (f x)
+  VCat .⋆IdL     = λ _ → refl
+  VCat .⋆IdR     = λ _ → refl
+  VCat .⋆Assoc   = λ _ _ _ → refl
+  VCat .isSetHom {y = y} = isSet→ (isSetEl y)
 
   open CwF
   open Iso
 
-  UCwF : CwF UCtx (ℓ-max ℓ ℓ') ℓ'
-  UCwF .⟨⟩           = Unit , (λ _ → isContrΠ (λ _ → UnitTerminal))
-  UCwF .Ty Γ         = El Γ → U
-  UCwF ._[_]Ty A σ x = A (σ x)
-  UCwF .[id]Ty _     = refl
-  UCwF .[][]Ty _ _ _ = refl
-  UCwF .Tm Γ A       = (x : El Γ) → El (A x)
-  UCwF ._[_]Tm a σ x = a (σ x)
-  UCwF .[id]Tm _     = refl
-  UCwF .[][]Tm _ _ _ = refl
-  UCwF ._⋆_          = Sig
-  UCwF .p            = λ x → SigIso _ _ .fun x .fst
-  UCwF .q            = λ x → SigIso _ _ .fun x .snd
-  UCwF .⟨_,_⟩        = λ σ a x → SigIso _ _ .inv (σ x , a x)
-  UCwF .p⟨⟩          = λ σ a i x → fst (SigIso _ _ .sec (σ x , a x) i)
-  UCwF .q⟨⟩          = λ σ a p → funExt (λ x → {!cong snd (SigIso _ _ .sec (σ x , a x))!})
-  UCwF .⟨⟩∘          = {!!}
-  UCwF .⟨p,q⟩        = {!!}
+  VCwF : CwF VCat (ℓ-suc ℓ) ℓ
+--  VCwF .⟨⟩               = {!!}
+  VCwF .Ty Γ               = El Γ → V {ℓ}
+  VCwF ._[_]Ty A σ x       = A (σ x)
+  VCwF .[id]Ty _           = refl
+  VCwF .[][]Ty _ _ _       = refl
+  VCwF .Tm Γ A             = (x : El Γ) → El (A x)
+  VCwF ._[_]Tm a σ x       = a (σ x)
+  VCwF .[id]Tm _           = refl
+  VCwF .[][]Tm _ _ _       = refl
+  VCwF ._⋆_                = Σ⁰
+  VCwF .p                  = fst
+  VCwF .q                  = snd
+  VCwF .⟨_,_⟩ σ a x        = (σ x) , a x
+  VCwF .p⟨⟩ σ a            = refl
+  VCwF .q⟨⟩ σ a p          = funExt (λ x → toPathP (λ i → {!transp (λ j → El (p (~ i ∘ir j) x)) i (a x)!}))
+  VCwF .⟨⟩∘ σ' σ a pa' i x = σ (σ' x) , pa' (~ i) x
+  VCwF .⟨p,q⟩ _            = refl
+
+  goal : Σ-Structure-CwF VCat VCwF
+  goal .Σ-Structure-CwF.ΣTy A B x  = Σ⁰ (A x) (λ y → B (x , y))
+  goal .Σ-Structure-CwF.pair a = J> (λ b x → (a x) , (b x))
+  goal .Σ-Structure-CwF.fst c x = fst (c x)
+  goal .Σ-Structure-CwF.snd c = J> (λ x → snd (c x))
+  goal .Σ-Structure-CwF.fstPair {Γ = Γ} {A = A} a = J> (λ b i x →  (transp (λ j → El (A (transp (λ _ → El Γ) (i ∨ j) x))) i (a (transp (λ _ → El Γ) i x))))
+  goal .Σ-Structure-CwF.sndPair a = J> (λ b → J> (λ pfstca' → toPathP (λ i x → {!!})))
+  goal .Σ-Structure-CwF.pairFstSnd c = J> {!!}
+  goal .Σ-Structure-CwF.ΣTy[] {A = A} {B = B} σ q' pq' = funExt (λ x → cong (Σ⁰ (A (σ x))) (funExt (λ y → cong B (λ i → (σ x) , (pq' i  (x , y))))))
+  goal .Σ-Structure-CwF.pair[] {A = A} {B = B} = λ σ pq' a → {!!}
+  goal .Σ-Structure-CwF.fst[]      = λ σ c q' pq' cσ pcσ i x → fst (pcσ i x)
+  goal .Σ-Structure-CwF.snd[] σ c     = J> (J> (J> (J> (λ p → toPathP (λ i x → {!!})))))
