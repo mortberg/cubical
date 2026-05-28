@@ -3,22 +3,23 @@
 module Cubical.Categories.WithFamilies.Pitts.CwF where
 
 open import Cubical.Foundations.Prelude
-
-open import Cubical.Categories.Category
-open import Cubical.Categories.Limits.Terminal
-
-open import Cubical.Data.Sigma
-
 open import Cubical.Foundations.HLevels
 open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.Transport
 open import Cubical.Foundations.Isomorphism
 
+open import Cubical.Functions.FunExtEquiv
+
+open import Cubical.Data.Sigma
+
+open import Cubical.Categories.Category
+open import Cubical.Categories.Limits.Terminal
+
 private
   variable
     ℓ ℓ' : Level
 
-module _ {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
+module Algebraic {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
 
   open Category C hiding (_⋆_)
 
@@ -29,9 +30,10 @@ module _ {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
 
   infix 20 _⟶_
 
-  variable
-    Γ Δ Θ : Ctx
+  private variable
+    Θ Δ Γ : Ctx
 
+  -- Unfolded definition of CwF à la Pitts
   record CwF (ℓTy ℓTm : Level) :
              Type (ℓ-suc (ℓ-max ℓOb (ℓ-max ℓHom (ℓ-max ℓTy  ℓTm)))) where
     field
@@ -41,6 +43,8 @@ module _ {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
       -- | Types
 
       Ty : (Γ : Ctx) → Type ℓTy
+
+      isSetTy : (Γ : Ctx) → isSet (Ty Γ)
 
       _[_]Ty : (A : Ty Γ) (σ : Δ ⟶ Γ)
              → ----------------------
@@ -57,6 +61,9 @@ module _ {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
       -- | Terms
 
       Tm : (Γ : Ctx) (A : Ty Γ) → Type ℓTm
+
+      -- TODO: is this really needed?
+      isSetTm : (Γ : Ctx) (A : Ty Γ) → isSet (Tm Γ A)
 
       _[_]Tm : {A : Ty Γ} (a : Tm Γ A) (σ : Δ ⟶ Γ)
              → -----------------------------------
@@ -82,7 +89,7 @@ module _ {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
 
       ⟨_,_⟩ : {A : Ty Γ} (σ : Δ ⟶ Γ) (a : Tm Δ (A [ σ ]Ty))
             → ---------------------------------------------
-              C [ Δ , Γ ⋆ A ]
+              Δ ⟶ Γ ⋆ A
 
       p⟨⟩ : {A : Ty Γ} (σ : Δ ⟶ Γ) (a : Tm Δ (A [ σ ]Ty))
           → ---------------------------------------------
@@ -100,7 +107,7 @@ module _ {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
 
       ⟨⟩∘ : {A : Ty Γ} (σ' : Θ ⟶ Δ) (σ : Δ ⟶ Γ) (a : Tm Δ (A [ σ ]Ty))
 
-            -- Used to represent a[σ'] so that we don't need subst/transport
+            -- Used to present a[σ'] so that we don't need subst/transport
             {a' : Tm Θ (A [ σ ∘ σ' ]Ty)}
             (pa' : PathP (λ i → Tm Θ ([][]Ty A σ' σ i)) a' (a [ σ' ]Tm))
           → ----------------------------------------------------------------
@@ -110,9 +117,9 @@ module _ {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
             → ------------------------
               ⟨ p {A = A} , q ⟩ ≡ id
 
-    infix 30 _[_]Ty
-    infix 30 _[_]Tm
-    infix 20 _⋆_
+    infix  40 _[_]Ty
+    infix  40 _[_]Tm
+    infixl 30 _⋆_
 
   record Σ-Structure-CwF {ℓTy ℓTm : Level} (cwf : CwF ℓTy ℓTm) :
          Type (ℓ-suc (ℓ-max ℓOb (ℓ-max ℓHom (ℓ-max ℓTm ℓTy)))) where
@@ -220,7 +227,7 @@ module _ {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
             → ---------------------------------------------------------------------------------
               PathP (λ i → Tm Δ (p i)) ((snd c fstc pfstc) [ σ ]Tm) (snd cσ fstcσ pfstcσ)
 
-module V {ℓ : Level} where
+module V_Algebraic_CwF {ℓ : Level} where
 
   open import Cubical.Data.IterativeSets.Base renaming (V⁰ to V ; El⁰ to El ; isSetEl⁰ to isSetEl)
   open import Cubical.Data.IterativeSets.Sigma
@@ -239,23 +246,27 @@ module V {ℓ : Level} where
   VCat .⋆Assoc   = λ _ _ _ → refl
   VCat .isSetHom {y = y} = isSet→ (isSetEl y)
 
+  open Algebraic
   open CwF
   open Iso
 
   VCwF : CwF VCat (ℓ-suc ℓ) ℓ
   VCwF .⟨⟩                 = unit⁰ , λ _ → (λ _ → lift tt) , λ _ _ _ → lift tt
   VCwF .Ty Γ               = El Γ → V {ℓ}
+  VCwF .isSetTy Γ          = isSet→ isSetV⁰
   VCwF ._[_]Ty A σ x       = A (σ x)
   VCwF .[id]Ty _           = refl
   VCwF .[][]Ty _ _ _       = refl
   VCwF .Tm Γ A             = (x : El Γ) → El (A x)
+  VCwF .isSetTm Γ A        = isSetΠ (λ _ → isSetEl _)
   VCwF ._[_]Tm a σ x       = a (σ x)
   VCwF .[id]Tm _           = refl
   VCwF .[][]Tm _ _ _       = refl
   VCwF ._⋆_                = Σ⁰
   VCwF .p                  = fst
   VCwF .q                  = snd
-  VCwF .⟨_,_⟩ σ a x        = (σ x) , a x
+  VCwF .⟨_,_⟩ σ a x .fst   = σ x
+  VCwF .⟨_,_⟩ σ a x .snd   = a x
   VCwF .p⟨⟩ σ a            = refl
   VCwF .coerce σ a         = refl
   VCwF .q⟨⟩ σ a            = refl
@@ -306,20 +317,7 @@ module V {ℓ : Level} where
                                (subst (λ f → El (B (σ z , f))) refl (snd (c (σ z))))
       in funExt (λ z → subst⁻ (λ p₁ → goalType z p₁) rem refl)))))
 
-
-
-
-
-
-
-
-
-
-
-
--- TODO: generalize
-
-
+-- TODO: generalize and insantiate for Tarski universe
 -- module Tarski (U : Type ℓ)
 --               (isSetU : isSet U)
 --               (El : U → Type ℓ')
@@ -362,3 +360,173 @@ module V {ℓ : Level} where
 --   UCwF .q⟨⟩          = λ σ a p → funExt (λ x → {!cong snd (SigIso _ _ .sec (σ x , a x))!})
 --   UCwF .⟨⟩∘          = {!!}
 --   UCwF .⟨p,q⟩        = {!!}
+
+
+-- Now we define a more categorical version
+open import Cubical.Categories.Presheaf
+open import Cubical.Categories.Functor
+import Cubical.Categories.Instances.Elements as Els
+open Els.Contravariant
+-- open import Cubical.Categories.Instances.BinProduct
+-- open import Cubical.Categories.Functors.HomFunctor
+
+module Categorical {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
+
+  open Category C hiding (_⋆_)
+  open Functor
+  open Iso
+
+  Ctx = Category.ob C
+
+  _⟶_ : (Δ Γ : Ctx) → Type ℓHom
+  Δ ⟶ Γ = C [ Δ , Γ ]
+
+  infix 20 _⟶_
+
+  private variable
+    Θ Δ Γ : Ctx
+
+  -- More categorical definition of CwF
+  record CwF (ℓTy ℓTm : Level) :
+             Type (ℓ-suc (ℓ-max ℓOb (ℓ-max ℓHom (ℓ-max ℓTy  ℓTm)))) where
+    field
+      emptyContext : Terminal C
+
+      Ty : Presheaf C ℓTy
+
+      Tm : Presheaf (∫ Ty) ℓTm
+
+      ctxExt : Functor (∫ Ty) C
+
+    -- Some nicer notations
+    Ty[_] : (Γ : Ctx) → Type ℓTy
+    Ty[ Γ ] = Ty .F-ob Γ .fst
+
+    _[_]Ty : (A : Ty[ Γ ]) (σ : Δ ⟶ Γ) → Ty[ Δ ]
+    A [ σ ]Ty = Ty .F-hom σ A
+
+    Tm[_,_] : (Γ : Ctx) (A : Ty[ Γ ]) → Type ℓTm
+    Tm[ Γ , A ] = Tm .F-ob (Γ , A) .fst
+
+    _[_]Tm : {A : Ty[ Γ ]} (a : Tm[ Γ , A ]) (σ : Δ ⟶ Γ) → Tm[ Δ , A [ σ ]Ty ]
+    a [ σ ]Tm = Tm .F-hom (σ , refl) a
+
+    _⋆_ : (Γ : Ctx) (A : Ty[ Γ ]) → Ctx
+    Γ ⋆ A = ctxExt .F-ob (Γ , A)
+
+    infix  40 _[_]Ty
+    infix  40 _[_]Tm
+    infixl 30 _⋆_
+
+    field
+      ctxExtIso : (A : Ty[ Γ ])
+                → Iso (Δ ⟶ Γ ⋆ A) (Σ[ σ ∈ Δ ⟶ Γ ] Tm[ Δ , A [ σ ]Ty ])
+
+
+    -- TODO: what is a good name for this?
+    drop : (A : Ty[ Γ ]) (τ : Δ ⟶ Γ ⋆ A) → Δ ⟶ Γ
+    drop A τ = ctxExtIso A .fun τ .fst
+
+    field
+      -- This is redundant and doesn't seem to make instantiation easier...
+      coerceFun : (A : Ty[ Γ ]) (σ : Δ ⟶ Γ ⋆ A) (τ : Θ ⟶ Δ)
+                → A [ drop A σ ]Ty [ τ ]Ty ≡ A [ drop A σ ∘ τ ]Ty
+
+      ctxExtIsoFunNat : (A : Ty[ Γ ]) (σ : Δ ⟶ Γ ⋆ A) (τ : Θ ⟶ Δ)
+                      → ctxExtIso A .fun (σ ∘ τ)
+                      ≡ ( drop A σ ∘ τ
+                        , Tm .F-hom (τ , coerceFun A σ τ) (ctxExtIso A .fun σ .snd))
+
+      -- We can also do it this way...
+      ctxExtIsoFunNatWithoutCoerceFun :
+                         (A : Ty[ Γ ]) (σ : Δ ⟶ Γ ⋆ A) (τ : Θ ⟶ Δ)
+                      →  ctxExtIso A .fun (σ ∘ τ)
+                      ≡ ( drop A σ ∘ τ
+                        , Tm .F-hom (τ , sym (funExt⁻ (Ty .F-seq (drop A σ) τ) A)) (ctxExtIso A .fun σ .snd))
+
+      -- Stating naturality for the inverse is closer to the algebraic version, so we do it as well even though it is redundant...
+      coerceInv : (A : Ty[ Γ ]) (σ : Δ ⟶ Γ) (τ : Θ ⟶ Δ)
+                → A [ σ ]Ty [ τ ]Ty ≡ A [ σ ∘ τ ]Ty
+
+      ctxExtIsoInvNat : (A : Ty[ Γ ]) (σ : Δ ⟶ Γ) (a : Tm[ Δ , A [ σ ]Ty ]) (τ : Θ ⟶ Δ)
+                      → ctxExtIso A .inv (σ , a) ∘ τ
+                      ≡ ctxExtIso A .inv (σ ∘ τ , Tm .F-hom (τ , coerceInv A σ τ) a)
+
+      ctxExtIsoInvNatWithoutCoerceInv :
+                        (A : Ty[ Γ ]) (σ : Δ ⟶ Γ) (a : Tm[ Δ , A [ σ ]Ty ]) (τ : Θ ⟶ Δ)
+                      → ctxExtIso A .inv (σ , a) ∘ τ
+                      ≡ ctxExtIso A .inv (σ ∘ τ , Tm .F-hom (τ , sym (funExt⁻ (Ty .F-seq σ τ) A)) a)
+
+  record Σ-Structure-CwF {ℓTy ℓTm : Level} (cwf : CwF ℓTy ℓTm) :
+         Type (ℓ-suc (ℓ-max ℓOb (ℓ-max ℓHom (ℓ-max ℓTm ℓTy)))) where
+
+    open CwF cwf
+
+    field
+      ΣTy : (A : Ty[ Γ ]) (B : Ty[ Γ ⋆ A ]) → Ty[ Γ ]
+
+      ΣTyNat : (A : Ty[ Γ ]) (B : Ty[ Γ ⋆ A ]) (σ : Δ ⟶ Γ)
+             → (ΣTy A B) [ σ ]Ty ≡ ΣTy (A [ σ ]Ty) (B [ ctxExt .F-hom (σ , refl) ]Ty)
+
+      ΣTmIso : (A : Ty[ Γ ]) (B : Ty[ Γ ⋆ A ])
+             → Iso (Tm[ Γ , ΣTy A B ])
+                   (Σ[ a ∈ Tm[ Γ , A ] ] Tm[ Γ , B [ ctxExtIso A .inv (id , (a [ id ]Tm)) ]Ty ])
+
+      ΣTmIsoFunNat : (A : Ty[ Γ ]) (B : Ty[ Γ ⋆ A ]) (σ : Δ ⟶ Γ)
+                   → {!!}
+
+      -- TODO: state this also for the inverse. Maybe it is nicer?
+      ΣTmIsoInvNat : (A : Ty[ Γ ]) (B : Ty[ Γ ⋆ A ]) (σ : Δ ⟶ Γ)
+                   → {!!}
+
+module V_Categorical_CwF {ℓ : Level} where
+
+  open import Cubical.Data.IterativeSets.Base renaming (V⁰ to V ; El⁰ to El ; isSetEl⁰ to isSetEl)
+  open import Cubical.Data.IterativeSets.Sigma
+  open import Cubical.Data.IterativeSets.Unit
+  open import Agda.Builtin.Unit
+
+  open Category
+
+  VCat : Category (ℓ-suc ℓ) ℓ
+  VCat .ob       = V
+  VCat .Hom[_,_] = λ Δ Γ → El Δ → El Γ
+  VCat .id       = λ x → x
+  VCat ._⋆_      = λ f g x → g (f x)
+  VCat .⋆IdL     = λ _ → refl
+  VCat .⋆IdR     = λ _ → refl
+  VCat .⋆Assoc   = λ _ _ _ → refl
+  VCat .isSetHom {y = y} = isSet→ (isSetEl y)
+
+  open Categorical
+  open CwF
+  open Iso
+  open Functor
+
+  VCwF : CwF VCat (ℓ-suc ℓ) ℓ
+  VCwF .emptyContext    = unit⁰ , λ _ → (λ _ → lift tt) , λ _ _ _ → lift tt
+  VCwF .Ty .F-ob Γ .fst = El Γ → V {ℓ}
+  VCwF .Ty .F-ob Γ .snd = isSet→ isSetV⁰
+  VCwF .Ty .F-hom σ A x = A (σ x)
+  VCwF .Ty .F-id        = refl
+  VCwF .Ty .F-seq _ _   = refl
+  VCwF .Tm .F-ob (Γ , A) .fst = (x : El Γ) → El (A x)
+  VCwF .Tm .F-ob (Γ , A) .snd = isSetΠ (λ _ → isSetEl _)
+  VCwF .Tm .F-hom σ a x       = subst El (funExt⁻ (σ .snd) x) (a (σ .fst x)) -- TODO: why do we need a subst here?
+  VCwF .Tm .F-id             = funExt₂ (λ _ _ → transportRefl _)
+  VCwF .Tm .F-seq σ τ        = funExt₂ (λ _ _ → substComposite El _ _ _)
+  VCwF .ctxExt .F-ob (Γ , A) = Σ⁰ Γ A
+  VCwF .ctxExt .F-hom σ (x , a) .fst = σ .fst x
+  VCwF .ctxExt .F-hom σ (x , a) .snd = subst⁻ El (funExt⁻ (σ .snd) x) a
+  VCwF .ctxExt .F-id = funExt (λ x → ΣPathP (refl , transportRefl _))
+  VCwF .ctxExt .F-seq σ τ  =
+    funExt (λ x → ΣPathP ( refl
+                         , cong (λ p → subst El p (x .snd)) (isSetV⁰ _ _ _ _)
+                         ∙ substComposite El _ _ _))
+  VCwF .ctxExtIso A        = Σ-Π-Iso
+  VCwF .coerceFun A σ τ    = refl -- yay!
+  VCwF .ctxExtIsoFunNat A σ τ = ΣPathP (refl , (funExt (λ x → sym (transportRefl _))))
+  VCwF .ctxExtIsoFunNatWithoutCoerceFun A σ τ = ΣPathP (refl , (funExt (λ x → sym (transportRefl _))))
+  VCwF .coerceInv A σ τ    = refl -- yay!
+  VCwF .ctxExtIsoInvNat A σ a τ = funExt (λ x → ΣPathP (refl , (sym (transportRefl _))))
+  VCwF .ctxExtIsoInvNatWithoutCoerceInv A σ a τ = funExt (λ x → ΣPathP (refl , (sym (transportRefl _))))
