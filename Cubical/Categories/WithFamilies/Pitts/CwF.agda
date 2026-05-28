@@ -514,13 +514,13 @@ module V_Categorical_CwF {ℓ : Level} where
   open import Cubical.Data.IterativeSets.Unit
   open import Agda.Builtin.Unit
 
-  open Category
+  open Category renaming (_⋆_ to _⋆C_)
 
   VCat : Category (ℓ-suc ℓ) ℓ
   VCat .ob       = V
   VCat .Hom[_,_] = λ Δ Γ → El Δ → El Γ
   VCat .id       = λ x → x
-  VCat ._⋆_      = λ f g x → g (f x)
+  VCat ._⋆C_     = λ f g x → g (f x)
   VCat .⋆IdL     = λ _ → refl
   VCat .⋆IdR     = λ _ → refl
   VCat .⋆Assoc   = λ _ _ _ → refl
@@ -540,7 +540,7 @@ module V_Categorical_CwF {ℓ : Level} where
   VCwF .Ty .F-seq _ _   = refl
   VCwF .Tm .F-ob (Γ , A) .fst = (x : El Γ) → El (A x)
   VCwF .Tm .F-ob (Γ , A) .snd = isSetΠ (λ _ → isSetEl _)
-  VCwF .Tm .F-hom σ a x       = subst El (funExt⁻ (σ .snd) x) (a (σ .fst x)) -- TODO: why do we need a subst here?
+  VCwF .Tm .F-hom σ a x      = subst El (funExt⁻ (σ .snd) x) (a (σ .fst x)) -- TODO: why do we need a subst here?
   VCwF .Tm .F-id             = funExt₂ (λ _ _ → transportRefl _)
   VCwF .Tm .F-seq σ τ        = funExt₂ (λ _ _ → substComposite El _ _ _)
   VCwF .ctxExt .F-ob (Γ , A) = Σ⁰ Γ A
@@ -559,10 +559,18 @@ module V_Categorical_CwF {ℓ : Level} where
   VCwF .ctxExtIsoInvNat A σ a τ = funExt (λ x → ΣPathP (refl , (sym (transportRefl _))))
   VCwF .ctxExtIsoInvNatWithoutCoerceInv A σ a τ = funExt (λ x → ΣPathP (refl , (sym (transportRefl _))))
 
+  open import Cubical.Foundations.Path
 
   open Σ-Structure-CwF
-  help : {ℓ ℓ' : Level} {A : Type ℓ} {x y : A} (B : A → Type ℓ') (b : B (transport refl x)) → subst B (transportRefl x) b  ≡ {!!}
-  help = {!!}
+
+  -- help : (A : Ty[ Γ ]) (a : Tm[ Γ , A ]) (B : Ty[ Γ ⋆ A ]) (σ : Δ ⟶ Γ) → (VCwF [
+  --      (VCwF [ B ]Ty) (λ x → x , (VCwF [ a ]Tm) (λ x₁ → x₁) x) ]Ty)
+  --     σ
+  --     ≡
+  --     (VCwF [ (VCwF [ B ]Ty) (ctxExt VCwF .F-hom (σ , refl)) ]Ty)
+  --     (λ x → x , (VCwF [ (VCwF [ a ]Tm) σ ]Tm) (λ x₁ → x₁) x)
+  -- help = {!!}
+
   goal : Σ-Structure-CwF VCat VCwF
   goal .ΣTy A B x = Σ⁰ (A x) (λ y → B (x , y))
   goal .ΣTyNat A B σ = funExt (λ x → cong (Σ⁰ (A (σ x))) (funExt (λ y → cong B (ΣPathP (refl , sym (transportRefl _))))))
@@ -575,12 +583,23 @@ module V_Categorical_CwF {ℓ : Level} where
   goal .coerceFun = {!!}
   goal .ΣTmIsoFunNat A B a σ = ΣPathP (funExt (λ ρ → transportRefl _ ∙ {!!}) , {!!})
   goal .coerceInv A B a σ = funExt (λ ρ → Σ≡Prop isPropIsIterativeSet (cong (λ foo → fst (B foo)) (ΣPathP (refl , (cong (transport refl) (sym (transportRefl _ ∙ transportRefl _)))))))
-  goal .ΣTmIsoInvNat {Δ = Δ} A B a b σ =
-    let foo : (ρ : El Δ) → {!!}
+  goal .ΣTmIsoInvNat {Δ = Δ} A B a b σ = funExt (λ ρ → ΣPathP (refl , {!!}))
+{-    let foo : (ρ : El Δ) → {!!}
         foo ρ = {!!}
     in funExt (λ ρ → ΣPathP (refl , symP (toPathP (fromPathP (
     let foo : PathP (λ k → El (B (σ ρ , transportRefl (transp (λ _ → El (A (σ ρ))) i0 (a (σ ρ))) k)))
                     (transp (λ i → El (B (σ ρ , transp (λ _ → El (A (σ ρ))) (~ i) (transp (λ _ → El (A (σ ρ))) i0 (a (σ ρ)))))) i0 (b (σ ρ)))
                     (b (σ ρ))
-        foo = {!!}
-    in symP (toPathP ({!!} ∙ sym {!!}))) ∙ sym (subst⁻Subst (λ p → El (B (σ ρ , p))) (transportRefl _) (b (σ ρ)))))))
+        foo = symP (toPathP refl)
+
+        prf = (funExt (λ ρ₁ → Σ≡Prop isPropIsIterativeSet (λ i → fst (B (ΣPathP ((λ _ → σ ρ₁) , (λ i₁ → transport (λ _ → El (A (σ ρ₁))) ((transportRefl (transport refl (a (σ ρ₁))) ∙ transportRefl (a (σ ρ₁))) (~ i₁))))  i)))))
+        prf2 = (subst Tm[ VCwF , Δ ] prf (((VCwF [ b ]Tm) σ)) ρ)
+
+        goal : transport (λ i →  El (B (σ ρ , transp (λ _ → El (A (σ ρ))) i (transport (λ _ → El (A (σ ρ))) (a (σ ρ))))))
+                (subst (λ p → El (B (ctxExt VCwF .F-hom (σ , (λ _ x → A (σ x))) (ρ , p))))
+                       (transportRefl ((VCwF [ a ]Tm) σ ρ))
+                       prf2)
+             ≡ b (σ ρ)
+        goal = {!!}
+    in toPathP goal) ∙ sym (subst⁻Subst (λ p → El (B (σ ρ , p))) (transportRefl _) (b (σ ρ)))))))
+-}
