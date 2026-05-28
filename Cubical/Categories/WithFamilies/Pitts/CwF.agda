@@ -472,12 +472,40 @@ module Categorical {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
              → Iso (Tm[ Γ , ΣTy A B ])
                    (Σ[ a ∈ Tm[ Γ , A ] ] Tm[ Γ , B [ ctxExtIso A .inv (id , (a [ id ]Tm)) ]Ty ])
 
-      ΣTmIsoFunNat : (A : Ty[ Γ ]) (B : Ty[ Γ ⋆ A ]) (σ : Δ ⟶ Γ)
-                   → {!!}
+      coerceFun : (A : Ty[ Γ ])
+                  (B : Ty[ Γ ⋆ A ])
+                  (a : Tm[ Γ , ΣTy A B ])
+                  (σ : Δ ⟶ Γ)
+                → (B [ ctxExtIso A .inv (id , ΣTmIso A B .fun a .fst [ id ]Tm) ]Ty) [ σ ]Ty
+                ≡ (B [ ctxExt .F-hom (σ , refl) ]Ty) [ ctxExtIso (A [ σ ]Ty) .inv (id , (ΣTmIso A B .fun a .fst [ σ ]Tm) [ id ]Tm) ]Ty
 
-      -- TODO: state this also for the inverse. Maybe it is nicer?
-      ΣTmIsoInvNat : (A : Ty[ Γ ]) (B : Ty[ Γ ⋆ A ]) (σ : Δ ⟶ Γ)
-                   → {!!}
+      ΣTmIsoFunNat : (A : Ty[ Γ ])
+                     (B : Ty[ Γ ⋆ A ])
+                     (a : Tm[ Γ , ΣTy A B ])
+                     (σ : Δ ⟶ Γ)
+                   → ( (ΣTmIso A B .fun a .fst) [ σ ]Tm
+                     , subst (λ x → Tm[ Δ , x ]) (coerceFun A B a σ) ((ΣTmIso A B .fun a .snd) [ σ ]Tm)  )
+                   ≡ ΣTmIso (A [ σ ]Ty) (B [ ctxExt .F-hom (σ , refl) ]Ty) .fun
+                            (subst (λ x → Tm[ Δ , x ]) (ΣTyNat A B σ) (a [ σ ]Tm))
+
+      -- The inverse could be nicer? Fording could help even more...
+
+      coerceInv : (A : Ty[ Γ ])
+                  (B : Ty[ Γ ⋆ A ])
+                  (a : Tm[ Γ , A ])
+                  (σ : Δ ⟶ Γ)
+                → (B [ inv (ctxExtIso A) (id , a [ id ]Tm) ]Ty) [ σ ]Ty
+                ≡ (B [ ctxExt .F-hom (σ , refl) ]Ty) [ inv (ctxExtIso (A [ σ ]Ty)) (id , (a [ σ ]Tm) [ id ]Tm) ]Ty
+
+      ΣTmIsoInvNat : (A : Ty[ Γ ])
+                     (B : Ty[ Γ ⋆ A ])
+                     (a : Tm[ Γ , A ])
+                     (b : Tm[ Γ , B [ ctxExtIso A .inv (id , (a [ id ]Tm)) ]Ty ])
+                     (σ : Δ ⟶ Γ)
+                   → PathP (λ i → Tm[ Δ , ΣTyNat A B σ i ])
+                           (ΣTmIso A B .inv (a , b) [ σ ]Tm)
+                           (ΣTmIso (A [ σ ]Ty) (B [ ctxExt .F-hom (σ , refl) ]Ty) .inv
+                             (a [ σ ]Tm , subst (λ x → Tm[ Δ , x ]) (coerceInv A B a σ) (b [ σ ]Tm)))
 
 module V_Categorical_CwF {ℓ : Level} where
 
@@ -530,3 +558,29 @@ module V_Categorical_CwF {ℓ : Level} where
   VCwF .coerceInv A σ τ    = refl -- yay!
   VCwF .ctxExtIsoInvNat A σ a τ = funExt (λ x → ΣPathP (refl , (sym (transportRefl _))))
   VCwF .ctxExtIsoInvNatWithoutCoerceInv A σ a τ = funExt (λ x → ΣPathP (refl , (sym (transportRefl _))))
+
+
+  open Σ-Structure-CwF
+  help : {ℓ ℓ' : Level} {A : Type ℓ} {x y : A} (B : A → Type ℓ') (b : B (transport refl x)) → subst B (transportRefl x) b  ≡ {!!}
+  help = {!!}
+  goal : Σ-Structure-CwF VCat VCwF
+  goal .ΣTy A B x = Σ⁰ (A x) (λ y → B (x , y))
+  goal .ΣTyNat A B σ = funExt (λ x → cong (Σ⁰ (A (σ x))) (funExt (λ y → cong B (ΣPathP (refl , sym (transportRefl _))))))
+  goal .ΣTmIso A B .fun x .fst ρ = x ρ .fst
+  goal .ΣTmIso A B .fun x .snd ρ = subst (λ p → El (B (ρ , p))) (sym (transportRefl _)) (x ρ .snd)
+  goal .ΣTmIso A B .inv (x , y) ρ .fst = x ρ
+  goal .ΣTmIso A B .inv (x , y) ρ .snd = subst (λ p → El (B (ρ , p))) (transportRefl _) (y ρ)
+  goal .ΣTmIso A B .sec x = ΣPathP (refl , (funExt (λ ρ → subst⁻Subst (λ p → El (B (ρ , p))) (transportRefl _) _)))
+  goal .ΣTmIso A B .ret x = funExt (λ ρ → ΣPathP (refl , (substSubst⁻ (λ p → El (B (ρ , p))) (transportRefl _) _)))
+  goal .coerceFun = {!!}
+  goal .ΣTmIsoFunNat A B a σ = ΣPathP (funExt (λ ρ → transportRefl _ ∙ {!!}) , {!!})
+  goal .coerceInv A B a σ = funExt (λ ρ → Σ≡Prop isPropIsIterativeSet (cong (λ foo → fst (B foo)) (ΣPathP (refl , (cong (transport refl) (sym (transportRefl _ ∙ transportRefl _)))))))
+  goal .ΣTmIsoInvNat {Δ = Δ} A B a b σ =
+    let foo : (ρ : El Δ) → {!!}
+        foo ρ = {!!}
+    in funExt (λ ρ → ΣPathP (refl , symP (toPathP (fromPathP (
+    let foo : PathP (λ k → El (B (σ ρ , transportRefl (transp (λ _ → El (A (σ ρ))) i0 (a (σ ρ))) k)))
+                    (transp (λ i → El (B (σ ρ , transp (λ _ → El (A (σ ρ))) (~ i) (transp (λ _ → El (A (σ ρ))) i0 (a (σ ρ)))))) i0 (b (σ ρ)))
+                    (b (σ ρ))
+        foo = {!!}
+    in symP (toPathP ({!!} ∙ sym {!!}))) ∙ sym (subst⁻Subst (λ p → El (B (σ ρ , p))) (transportRefl _) (b (σ ρ)))))))
