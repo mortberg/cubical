@@ -507,6 +507,7 @@ module Categorical {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
                            (ΣTmIso (A [ σ ]Ty) (B [ ctxExt .F-hom (σ , refl) ]Ty) .inv
                              (a [ σ ]Tm , subst (λ x → Tm[ Δ , x ]) (coerceInv A B a σ) (b [ σ ]Tm)))
 
+
 module V_Categorical_CwF {ℓ : Level} where
 
   open import Cubical.Data.IterativeSets.Base renaming (V⁰ to V ; El⁰ to El ; isSetEl⁰ to isSetEl)
@@ -603,3 +604,34 @@ module V_Categorical_CwF {ℓ : Level} where
         goal = {!!}
     in toPathP goal) ∙ sym (subst⁻Subst (λ p → El (B (σ ρ , p))) (transportRefl _) (b (σ ρ)))))))
 -}
+
+module Categorical_from_Algebraic {ℓOb ℓHom ℓTy ℓTm : Level}
+                                  (C : Category ℓOb ℓHom)
+                                  (CwFA : Algebraic.CwF C ℓTy ℓTm) where
+
+   open Category renaming (_⋆_ to _⋆C_)
+
+   open Algebraic.CwF
+   open Categorical.CwF
+   open Functor
+
+   goalCwF : Categorical.CwF C ℓTy ℓTm
+   goalCwF .emptyContext = ⟨⟩ CwFA
+   goalCwF .Ty .F-ob Γ .fst = Ty CwFA Γ
+   goalCwF .Ty .F-ob Γ .snd = isSetTy CwFA Γ
+   goalCwF .Ty .F-hom σ A = Algebraic.CwF._[_]Ty CwFA A σ
+   goalCwF .Ty .F-id = funExt (λ A → [id]Ty CwFA A)
+   goalCwF .Ty .F-seq σ' σ = funExt (λ A → [][]Ty CwFA A σ σ')
+   goalCwF .Tm .F-ob (Γ , A) .fst = Tm CwFA Γ A
+   goalCwF .Tm .F-ob (Γ , A) .snd = isSetTm CwFA Γ A
+   goalCwF .Tm .F-hom (σ , p) a = {!!}
+   goalCwF .Tm .F-id = {!!}
+   goalCwF .Tm .F-seq = {!!}
+   goalCwF .ctxExt = {!!}
+   goalCwF .ctxExtIso = {!!}
+   goalCwF .coerceFun = {!!}
+   goalCwF .ctxExtIsoFunNat = {!!}
+   goalCwF .ctxExtIsoFunNatWithoutCoerceFun = {!!}
+   goalCwF .coerceInv = {!!}
+   goalCwF .ctxExtIsoInvNat = {!!}
+   goalCwF .ctxExtIsoInvNatWithoutCoerceInv = {!!}
