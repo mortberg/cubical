@@ -463,23 +463,7 @@ module Categorical {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
 
       ΣTmIso : (A : Ty[ Γ ]) (B : Ty[ Γ ⋆ A ])
              → Iso (Tm Γ (ΣTy A B))
-                   (Σ[ a ∈ Tm Γ A ] Tm Γ  (B [ ctxExtIso A .inv (id , (a [ id ]Tm)) ]Ty))
-
-      -- coerceFun : (A : Ty[ Γ ])
-      --             (B : Ty[ Γ ⋆ A ])
-      --             (a : Tm[ Γ , ΣTy A B ])
-      --             (σ : Δ ⟶ Γ)
-      --           → (B [ ctxExtIso A .inv (id , ΣTmIso A B .fun a .fst [ id ]Tm) ]Ty) [ σ ]Ty
-      --           ≡ (B [ ctxExt .F-hom (σ , refl) ]Ty) [ ctxExtIso (A [ σ ]Ty) .inv (id , (ΣTmIso A B .fun a .fst [ σ ]Tm) [ id ]Tm) ]Ty
-
-      -- ΣTmIsoFunNat : (A : Ty[ Γ ])
-      --                (B : Ty[ Γ ⋆ A ])
-      --                (a : Tm[ Γ , ΣTy A B ])
-      --                (σ : Δ ⟶ Γ)
-      --              → ( (ΣTmIso A B .fun a .fst) [ σ ]Tm
-      --                , subst (λ x → Tm[ Δ , x ]) (coerceFun A B a σ) ((ΣTmIso A B .fun a .snd) [ σ ]Tm)  )
-      --              ≡ ΣTmIso (A [ σ ]Ty) (B [ ctxExt .F-hom (σ , refl) ]Ty) .fun
-      --                       (subst (λ x → Tm[ Δ , x ]) (ΣTyNat A B σ) (a [ σ ]Tm))
+                   (Σ[ a ∈ Tm Γ A ] Tm Γ (B [ ctxExtIso A .inv (id , (a [ id ]Tm)) ]Ty))
 
       coerceInv : (A : Ty[ Γ ])
                   (B : Ty[ Γ ⋆ A ])

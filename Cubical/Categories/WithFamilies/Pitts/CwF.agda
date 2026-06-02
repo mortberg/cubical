@@ -583,8 +583,22 @@ module V_Categorical_CwF {ℓ : Level} where
   goal .ΣTmIso A B .ret x = funExt (λ ρ → ΣPathP (refl , (substSubst⁻ (λ p → El (B (ρ , p))) (transportRefl _) _)))
   goal .coerceFun = {!!}
   goal .ΣTmIsoFunNat A B a σ = ΣPathP (funExt (λ ρ → transportRefl _ ∙ {!!}) , {!!})
-  goal .coerceInv A B a σ = funExt (λ ρ → Σ≡Prop isPropIsIterativeSet (cong (λ foo → fst (B foo)) (ΣPathP (refl , (cong (transport refl) (sym (transportRefl _ ∙ transportRefl _)))))))
-  goal .ΣTmIsoInvNat {Δ = Δ} A B a b σ = funExt (λ ρ → ΣPathP (refl , {!!}))
+  goal .coerceInv A B a σ = funExt (λ ρ → cong B (ΣPathP (refl , cong (transport (λ _ → El (A (σ ρ)))) (sym (λ i → transp (λ _ → El (A (σ ρ))) i (transp (λ _ → El (A (σ ρ))) i (a (σ ρ))))))))
+  goal .ΣTmIsoInvNat {Δ = Δ} A B a b σ = funExt (λ ρ → ΣPathP (refl , symP (toPathP
+    let goal : transp (λ i → El (B (σ ρ , transp (λ _ → El (A (σ ρ))) i (transp (λ _ → El (A (σ ρ))) i0 (a (σ ρ))))))
+                      i0
+                      (transp (λ i → El (B (ctxExt VCwF .F-hom (σ , (λ _ x → A (σ x))) (ρ , transp (λ _ → El (A (σ ρ))) i (transp (λ _ → El (A (σ ρ))) i0 (a (σ ρ)))))))
+                              i0
+                              (subst Tm[ VCwF , Δ ] (goal .coerceInv A B a σ) ((VCwF [ b ]Tm) σ) ρ))
+             ≡ transp (λ i → El (B (σ ρ , transp (λ _ → El (A (σ ρ))) (~ i) (a (σ ρ)))))
+                      i0
+                      (transp (λ i → El (B (σ ρ , transp (λ _ → El (A (σ ρ))) i (a (σ ρ))))) i0 (b (σ ρ)))
+        goal = {!!}
+    in goal))) -- {!!})))
+
+
+
+
 {-    let foo : (ρ : El Δ) → {!!}
         foo ρ = {!!}
     in funExt (λ ρ → ΣPathP (refl , symP (toPathP (fromPathP (
