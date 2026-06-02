@@ -32,8 +32,7 @@ module _ {ℓOb ℓHom : Level} {C : Category ℓOb ℓHom} where
   ∫ : (P : Presheaf C ℓ) → Category (ℓ-max ℓOb ℓ) (ℓ-max ℓHom ℓ)
   ∫ P .ob = Σ[ c ∈ ob ] (P .F-ob c .fst)
   ∫ P .Hom[_,_] (x , px) (y , py) = Σ[ f ∈ C [ x , y ] ] P .F-hom f py ≡ px
-  ∫ P .id .fst = id
-  ∫ P .id .snd = {!!} -- funExt⁻ (P .F-id) _
+  ∫ P .id = (id , funExt⁻ (P .F-id) _)
   (∫ P ._⋆_ (f , _) (g , _)) .fst = f ⋆⟨ C ⟩ g
   (∫ P ._⋆_ (f , pf) (g , pg)) .snd = {!!} -- funExt⁻ (P .F-seq g f) _ ∙∙ cong (P .F-hom f) pg ∙∙ pf
   ∫ P .⋆IdL (f , pf) = {!!} --  Σ≡Prop ({!!}) (⋆IdL f)
@@ -46,35 +45,57 @@ module _ {ℓOb ℓHom : Level} {C : Category ℓOb ℓHom} where
   open Category C
 
   record Presheaf∫ (P : Presheaf C ℓ) : Type (ℓ-max ℓOb (ℓ-max ℓHom (ℓ-suc ℓ))) where
-     field
-       fun∫ : (x : ob) (A : P .F-ob x .fst) → Type ℓ
-       isSetFun∫ : (x : ob) (A : P .F-ob x .fst) → isSet (fun∫ x A)
 
-      -- -- TODO: is this really needed?
-      -- isSetTm : (Γ : Ctx) (A : Ty Γ) → isSet (Tm Γ A)
+    P-fun : (x : ob) → Type ℓ
+    P-fun x = P .F-ob x .fst
 
-      -- _[_]Tm : {A : Ty Γ} (a : Tm Γ A) (σ : Δ ⟶ Γ)
-      --        → -----------------------------------
-      --          Tm Δ (A [ σ ]Ty)
+    field
+      obPresheaf∫ : (x : ob) (px : P-fun x) → Type ℓ
+      isSetObPresheaf∫ : (x : ob) (px : P-fun x) → isSet (obPresheaf∫ x px)
 
-      -- [id]Tm : {A : Ty Γ} (a : Tm Γ A)
-      --        → ------------------------------------------------
-      --          PathP (λ i → Tm Γ ([id]Ty A i)) (a [ id ]Tm) a
+      homPresheaf∫ : {x y : ob} {px : P-fun x} (a : obPresheaf∫ x px) (f : C [ y , x ])
+                   → obPresheaf∫ y (P .F-hom f px)
 
-      -- [][]Tm : {A : Ty Γ} (a : Tm Γ A) (σ' : Θ ⟶ Δ) (σ : Δ ⟶ Γ)
-      --        → ------------------------------------------------
-      --           PathP (λ i → Tm Θ ([][]Ty A σ' σ i))
-      --                 (a [ σ ∘ σ' ]Tm)
-      --                 (a [ σ ]Tm [ σ' ]Tm)
+      homPresheaf∫Id : {x : ob} {px : P-fun x} (a : obPresheaf∫ x px)
+                     → PathP (λ i → obPresheaf∫ x (P .F-id i px))
+                             (homPresheaf∫ a id)
+                             a
+
+      homPresheaf∫Comp : {x y z : ob} {px : P-fun x} (a : obPresheaf∫ x px) (f : C [ y , x ]) (g : C [ z , y ])
+                       → PathP (λ i → obPresheaf∫ z (P .F-seq f g i px))
+                               (homPresheaf∫ a (f ∘ g))
+                               (homPresheaf∫ (homPresheaf∫ a f) g)
 
 
-  toPresheaf∫ : (P : Presheaf C ℓ) → Presheaf (∫ P) ℓ → Presheaf∫ P
-  toPresheaf∫ P = {!!}
+  open Presheaf∫
+
+  toPresheaf∫ : {F : Presheaf C ℓ} → Presheaf (∫ F) ℓ → Presheaf∫ F
+  toPresheaf∫ P .obPresheaf∫ x px = P .F-ob (x , px) .fst
+  toPresheaf∫ P .isSetObPresheaf∫ x px = P .F-ob (x , px) .snd
+  toPresheaf∫ P .homPresheaf∫ a f = P .F-hom (f , refl) a
+  toPresheaf∫ {F = F} P .homPresheaf∫Id {x = x} {px} a =
+    let
+        q : (px : F .F-ob x .fst) → F .F-hom id px ≡ px
+        q px i = F .F-id i px
+
+        p : P .F-ob (x , F .F-hom id px) .fst ≡ P .F-ob (x , px) .fst
+        p i = P .F-ob (x , q px i) .fst
+
+        goal2 : PathP (λ i → p i) (P .F-hom (id , refl) a) (P .F-hom (id , q px) a)
+        goal2 = {!congP!}
+
+        goal : transport p (P .F-hom (id , refl) a) ≡ P .F-hom (id , q px) a
+        goal = fromPathP goal2
+    in toPathP (goal ∙ funExt⁻ (P .F-id) a )
+   -- toPathP (fromPathP (cong {B = λ z → P .F-ob (x , z) .fst} (λ px' → {!!}) (funExt⁻ (F .F-id) px)) ∙ funExt⁻ (P .F-id) a)
+  toPresheaf∫ P .homPresheaf∫Comp = {!!}
 
   fromPresheaf∫ : (P : Presheaf C ℓ) → Presheaf∫ P → Presheaf (∫ P) ℓ
   fromPresheaf∫ P = {!!}
 
-
+-- PathP (λ i → P .F-ob (x , F .F-id i px) .fst)
+--       (P .F-hom (id , (λ _ → F .F-hom id px)) a)
+--       (P .F-hom (Category.id (∫ F)) a)
 {-
 module Categorical {ℓOb ℓHom : Level} (C : Category ℓOb ℓHom) where
 
